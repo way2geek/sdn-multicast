@@ -1,0 +1,12 @@
+En Packages/Settings view/ Open
+
+Busque por Python y le instale:
+
+- atom-python-run y me deja correr directo con f5 o f6
+- autocomplete-python
+- build python
+
+Tambien baje pero tengo desactivado
+- ide-python
+- python-debugger
+- python-indent
