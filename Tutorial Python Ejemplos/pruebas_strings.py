@@ -52,3 +52,8 @@ print posicion_palabra_hola
 #Encontrar ultima ocurrencia de una cadena de caracteres
 frase3 = 'una vez habia una vez una vez vez una una vez'
 print frase3.rfind('una')
+
+#Pruebas print (video 9)
+string_prueba5 = 'Este es el string de prueba que voy a usar'
+print 'Esto lo imprimo antes que el ', string_prueba5
+print "Tener cuidado cuando se necesita imprimir cosas con apostrofe's porque necesitan comillas dobles"
