@@ -1,0 +1,9 @@
+STREAM:
+1) vlc  videotest.mpg --sout '#standard{access= http,mux=ogg,dst=localhost:8080'
+2) vlc  videotest.mpg --sout '#standard{access= http,mux=ts,dst=localhost:8080'
+3)
+
+RECEIVE:
+1) vlc http://localhost:8080
+2) vlc http://localhost:8080
+3)
