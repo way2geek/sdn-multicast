@@ -132,3 +132,15 @@ class pruebaIGMP(app_manager.RyuApp):
         out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
                                   in_port=in_port, actions=actions, data=data)
         datapath.send_msg(out)
+
+    @set_ev_cls(igmplib.EventMulticastGroupStateChanged,
+                MAIN_DISPATCHER)
+    def _status_changed(self, ev):
+        msg = {
+            igmplib.MG_GROUP_ADDED: 'Multicast Group Added',
+            igmplib.MG_MEMBER_CHANGED: 'Multicast Group Member Changed',
+            igmplib.MG_GROUP_REMOVED: 'Multicast Group Removed',
+        }
+        self.logger.info("%s: [%s] querier:[%s] hosts:%s",
+                         msg.get(ev.reason), ev.address, ev.src,
+                         ev.dsts)
