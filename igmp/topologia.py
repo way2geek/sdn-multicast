@@ -11,22 +11,20 @@ class SingleSwitchTopo(Topo):
         s1 = self.addSwitch('s1')
         s2 = self.addSwitch('s2')
 
-        h1 = self.addHost('h4', mac="00:00:00:00:11:11", ip="192.168.1.1/24")
-        h2 = self.addHost('h5', mac="00:00:00:00:11:12", ip="192.168.1.2/24")
-        h3 = self.addHost('h6', mac="00:00:00:00:11:13", ip="192.168.1.3/24")
-        h4 = self.addHost('h1', mac="00:00:00:00:11:14", ip="172.16.10.10/24")
-        h5 = self.addHost('h2', mac="00:00:00:00:11:14", ip="172.16.20.20/24")
-        h6 = self.addHost('h3', mac="00:00:00:00:11:14", ip="172.16.30.30/24")
+        h1 = self.addHost('h1', mac="00:00:00:00:11:11", ip="172.16.10.10/24")
+        h2 = self.addHost('h2', mac="00:00:00:00:11:12", ip="172.16.20.20/24")
+        h3 = self.addHost('h3', mac="00:00:00:00:11:13", ip="172.16.30.30/24")
+        h4 = self.addHost('h4', mac="00:00:00:00:11:14", ip="192.168.1.1/24")
+        h5 = self.addHost('h5', mac="00:00:00:00:11:15", ip="192.168.1.2/24")
+        h6 = self.addHost('h6', mac="00:00:00:00:11:16", ip="192.168.1.3/24")
 
+        self.addLink(s1, s2)
         self.addLink(h1, s1)
         self.addLink(h2, s1)
         self.addLink(h3, s1)
         self.addLink(h4, s2)
         self.addLink(h5, s2)
         self.addLink(h6, s2)
-
-        self.addLink(s1, s2)
-
 
 if __name__ == '__main__':
     setLogLevel('info')
@@ -38,10 +36,10 @@ if __name__ == '__main__':
     #COMANDOS A LOS HOSTS
     h1 = net.get('h1')
     h2 = net.get('h2')
-    h3 = net.get('h2')
-    h4 = net.get('h2')
-    h5 = net.get('h2')
-    h6 = net.get('h2')
+    h3 = net.get('h3')
+    h4 = net.get('h4')
+    h5 = net.get('h5')
+    h6 = net.get('h6')
     #Fuerzo version de IGMP
     h1.cmd('echo 2 > /proc/sys/net/ipv4/conf/h1-eth0/force_igmp_version')
     h2.cmd('echo 2 > /proc/sys/net/ipv4/conf/h2-eth0/force_igmp_version')
@@ -59,7 +57,7 @@ if __name__ == '__main__':
 
     #COMANDOS A SWITCHES
     s1 = net.get('s1')
-    s1 = net.get('s1')
+    s2 = net.get('s1')
     #Establezco la version OPenFlow1.3 en los switches
     s1.cmd('ovs-vsctl set Bridge s1 protocol=OpenFlow13')
     s2.cmd('ovs-vsctl set Bridge s2 protocol=OpenFlow13')
