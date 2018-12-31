@@ -7,3 +7,11 @@ RECEIVE:
 1) vlc http://localhost:8080
 2) vlc http://localhost:8080
 3)
+
+
+info util:
+https://wiki.videolan.org/Documentation:Command_line/#
+https://wiki.videolan.org/Documentation:Streaming_HowTo/Stream_a_File/
+https://wiki.videolan.org/Codec/
+
+https://www.youtube.com/watch?v=MTVqITPuHt0
