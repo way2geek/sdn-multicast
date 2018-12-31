@@ -1,0 +1,12 @@
+
+Correr controlador ryu manager "ryu-manager igmpPrueba.py"
+Correr topologia "sudo python topologia.py"
+
+
+3) Comandos VLC en terminales de mn. Aca comienza el streaming
+
+4)
+
+Buscar forma de automatizar estos pasos
+Leer Traffic Monitor del Ryu Book a ver si sirve
+Buscar forma de imprimir grupos IGMP
