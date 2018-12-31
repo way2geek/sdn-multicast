@@ -22,6 +22,7 @@ class SimpleSwitchIgmp13(simple_switch_13.SimpleSwitch13):
         self._snoop.set_querier_mode(
             dpid=str_to_dpid('0000000000000001'), server_port=2)
 
+
     @set_ev_cls(igmplib.EventPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
         msg = ev.msg
