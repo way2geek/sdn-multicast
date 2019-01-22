@@ -55,10 +55,11 @@ if __name__ == '__main__':
     h5.cmd('ip route add default via 192.168.1.254')
     h6.cmd('ip route add default via 192.168.1.254')
 
-    h1.cmd('vlc videoplayback.mp4 --sout udp:225.0.0.1 --loop &')
-    h2.cmd('vlc videoplayback.mp4 --sout udp:225.0.0.2 --loop &')
+
     h3.cmd('vlc udp://@225.0.0.1 &')
     h3.cmd('vlc udp://@225.0.0.2 &')
+    h1.cmd('vlc videoplayback.mp4 --sout udp:225.0.0.1 --loop &')
+    h2.cmd('vlc videoplayback.mp4 --sout udp:225.0.0.2 --loop &')
     #h6.cmd('vlc udp://@225.0.0.1 &')
     #h4.cmd('vlc udp://@225.0.0.1 &')
     #h5.cmd('vlc udp://@225.0.0.2 &')
