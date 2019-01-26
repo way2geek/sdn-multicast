@@ -6,7 +6,7 @@ from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
 from ryu.lib import igmplib
 from ryu.lib.dpid import str_to_dpid
-from ryu.lib.packet import packet
+from ryu.lib.packet import
 from ryu.lib.packet import ethernet
 from ryu.app import simple_switch_13
 
@@ -21,7 +21,6 @@ class SimpleSwitchIgmp13(simple_switch_13.SimpleSwitch13):
         self._snoop = kwargs['igmplib']
         self._snoop.set_querier_mode(
             dpid=str_to_dpid('0000000000000001'), server_port=2)
-
 
     @set_ev_cls(igmplib.EventPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
@@ -76,3 +75,4 @@ class SimpleSwitchIgmp13(simple_switch_13.SimpleSwitch13):
         self.logger.info("%s: [%s] querier:[%s] hosts:%s",
                          msg.get(ev.reason), ev.address, ev.src,
                          ev.dsts)
+    
