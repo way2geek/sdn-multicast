@@ -9,9 +9,13 @@ from ryu.lib.dpid import str_to_dpid
 from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.app import simple_switch_13
+# import json
+
+# CONTADOR=1
 
 
 class SimpleSwitchIgmp13(simple_switch_13.SimpleSwitch13):
+
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     _CONTEXTS = {'igmplib': igmplib.IgmpLib}
 
@@ -68,11 +72,25 @@ class SimpleSwitchIgmp13(simple_switch_13.SimpleSwitch13):
     @set_ev_cls(igmplib.EventMulticastGroupStateChanged,
                 MAIN_DISPATCHER)
     def _status_changed(self, ev):
+        # diccionario = {}
+        array = []
         msg = {
             igmplib.MG_GROUP_ADDED: 'Multicast Group Added',
             igmplib.MG_MEMBER_CHANGED: 'Multicast Group Member Changed',
             igmplib.MG_GROUP_REMOVED: 'Multicast Group Removed',
         }
-        self.logger.info("%s: [%s] querier:[%s] hosts:%s",
-                         msg.get(ev.reason), ev.address, ev.src,
-                         ev.dsts)
+        # self.logger.info("%s: [%s] querier:[%s] hosts:%s",
+        #                  msg.get(ev.reason), ev.address, ev.src,
+        #                  ev.dsts)
+        array = array + [msg.get(ev.reason),ev.address,ev.src,ev.dst]
+
+        fileDesc = open("prueba2.txt","a+")
+        fileDesc.write(array)
+        #/revisar como llevarlo a un archivo
+
+        # nuevaKey = CONTADOR+1
+        # nuevoValor = [msg.get(ev.reason), ev.address, ev.src, ev.dsts]
+        # diccionario ['nuevaKey']=nuevoValor
+        #
+        # with open('prueba.txt', 'w') as file:
+        #     file.write(json.dumps(diccionario))
