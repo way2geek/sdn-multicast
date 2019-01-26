@@ -1,0 +1,10 @@
+
+- Routing: we need to have connectivity between different LANs.
+
+- Multicast:
+
+- IGMP:
+
+- PIM:
+
+- Executing 2 or more applications on the same Controller. Is it possible? How?

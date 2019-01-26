@@ -1,7 +1,6 @@
 
-Correr controlador ryu manager "ryu-manager igmpPrueba.py"
-Correr topologia "sudo python topologia.py"
-
+1) Correr controlador ryu manager "ryu-manager igmpPrueba.py"
+2) Correr topologia "sudo python topologia.py"
 
 3) Comandos VLC en terminales de mn. Aca comienza el streaming
 
