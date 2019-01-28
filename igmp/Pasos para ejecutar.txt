@@ -6,6 +6,5 @@
 
 4)
 
-Buscar forma de automatizar estos pasos
 Leer Traffic Monitor del Ryu Book a ver si sirve
 Buscar forma de imprimir grupos IGMP
