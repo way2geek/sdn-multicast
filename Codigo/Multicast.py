@@ -44,14 +44,14 @@ class MulticastController(app_manager.RyuApp):
         barrier_req = parser.OFPBarrierRequest(dp)
         dp.send_msg(barrier_req)
 
-    #Switch connected
+    #Conocimiento de los switches conectador en la red
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
         dp = ev.msg.datapath
         ofp = dp.ofproto
         parser = dp.ofproto_parser
 
-        #Add default flow
+        #Se agrega miss table
         match = parser.OFPMatch()
         actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER, ofp.OFPCML_NO_BUFFER)]
         instr = [parser.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions)]
@@ -80,3 +80,8 @@ class MulticastController(app_manager.RyuApp):
         src = eth.src
         dst = eth.dst
         self.log('From ' + src + ' to ' + dst)
+
+
+
+
+        

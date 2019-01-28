@@ -41,12 +41,12 @@ if __name__ == '__main__':
     h5 = net.get('h5')
     h6 = net.get('h6')
     #Fuerzo version de IGMP
-    h1.cmd('echo 2 > /proc/sys/net/ipv4/conf/h1-eth0/force_igmp_version')
-    h2.cmd('echo 2 > /proc/sys/net/ipv4/conf/h2-eth0/force_igmp_version')
-    h3.cmd('echo 2 > /proc/sys/net/ipv4/conf/h3-eth0/force_igmp_version')
-    h4.cmd('echo 2 > /proc/sys/net/ipv4/conf/h4-eth0/force_igmp_version')
-    h5.cmd('echo 2 > /proc/sys/net/ipv4/conf/h5-eth0/force_igmp_version')
-    h6.cmd('echo 2 > /proc/sys/net/ipv4/conf/h6-eth0/force_igmp_version')
+    #h1.cmd('echo 2 > /proc/sys/net/ipv4/conf/h1-eth0/force_igmp_version')
+    #h2.cmd('echo 2 > /proc/sys/net/ipv4/conf/h2-eth0/force_igmp_version')
+    #h3.cmd('echo 2 > /proc/sys/net/ipv4/conf/h3-eth0/force_igmp_version')
+    #h4.cmd('echo 2 > /proc/sys/net/ipv4/conf/h4-eth0/force_igmp_version')
+    #h5.cmd('echo 2 > /proc/sys/net/ipv4/conf/h5-eth0/force_igmp_version')
+    #h6.cmd('echo 2 > /proc/sys/net/ipv4/conf/h6-eth0/force_igmp_version')
     #Establezco la puerta de enlace predeterminada para los paquetes IGMP
     h1.cmd('ip route add default via 172.16.10.254')
     h2.cmd('ip route add default via 172.16.20.254')
@@ -56,10 +56,10 @@ if __name__ == '__main__':
     h6.cmd('ip route add default via 192.168.1.254')
 
 
-    h3.cmd('vlc-wrapper udp://@225.0.0.1 &')
-    h3.cmd('vlc-wrapper udp://@225.0.0.2 &')
-    h1.cmd('vlc-wrapper videoplayback.mp4 --sout udp:225.0.0.1 --loop &')
-    h2.cmd('vlc-wrapper videoplayback.mp4 --sout udp:225.0.0.2 --loop &')
+    #h3.cmd('vlc udp://@225.0.0.1 &')
+    #h3.cmd('vlc udp://@225.0.0.2 &')
+    #h1.cmd('vlc videoplayback.mp4 --sout udp:225.0.0.1 --loop &')
+    #h2.cmd('vlc videoplayback.mp4 --sout udp:225.0.0.2 --loop &')
     #h6.cmd('vlc udp://@225.0.0.1 &')
     #h4.cmd('vlc udp://@225.0.0.1 &')
     #h5.cmd('vlc udp://@225.0.0.2 &')
