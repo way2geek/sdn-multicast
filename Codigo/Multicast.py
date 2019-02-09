@@ -27,14 +27,40 @@ class MulticastController(app_manager.RyuApp):
             dpid=str_to_dpid('0000000000000001'), server_port=1)
 
         self.groups = {}
-        groups = IgmpQuerier()._mcast.copy()
-        self.subscribers = {} #ip_group -> subscriber -> [MODE (include = True, exclude = False) ip_sources]
-        self.ip_2_mac = {}
+        groups = IgmpQuerier().mcast.copy()
+        #self.subscribers = {} #ip_group -> subscriber -> [MODE (include = True, exclude = False) ip_sources]
+        #self.ip_2_mac = {}
 
 
     def log(self, message):
         self.logger.info(message)
         return
+
+
+    def validoMulticast(dp,msg,pkt):
+
+        eth = pkt[0]
+        dst = eth.dst
+        if (eth.ethertype == ether_types.ETH_TYPE_IP and dst != 'ff:ff:ff:ff:ff:ff'):
+            procesoMulticast(dp,msg,pkt)
+        else:
+            #SOLO SE PROCESAN PAQUETES IPV4 MULTICAST
+            return
+
+
+    def procesoMulticast(dp,msg,pkt):
+        self.log('IVP4 Multicast Message')
+
+
+    def procesoOtros(dp,msg,pkt):
+        self.log('Se ignoran los siguientes paquetes: ')
+        for p in pkt.protocols:
+            self.log(str(p))
+
+
+    #SE VERIFICA SI EL DESTINO ES MULTICAST COMPARANDO CON LA MAC MULTICAST
+    def esMulticast(dst):
+        return (dst[0:2] == '01' or dst[0:5] == '33:33' or dst == 'ff:ff:ff:ff:ff:ff')
 
 
     #Conocimiento de los switches conectados en la red
@@ -57,58 +83,22 @@ class MulticastController(app_manager.RyuApp):
     def packet_in_handler(self, ev):
         msg = ev.msg
         dp = msg.datapath
+        in_port = msg.match['in_port']
 
         pkt = packet.Packet(msg.data)
-        eth = pkt[0]
+        eth = pkt.get_protocols(ethernet.ethernet)[0]
+        ip = pkt.get_protocol(ipv4.ipv4)
+        protocol = ip.proto
 
         self.log('Received ethernet packet')
         src = eth.src
         dst = eth.dst
 
-        if eth.protocol_name != 'ethernet':
-            #Se procesan los paquetes que no son multicast
-            self.procesoOtros(dp,msg,pkt)
-            return
-
-        #IGNORO PAQUETES LLDP
-        if eth.ethertype == ether_types.ETH_TYPE_LLDP:
-            return
-
-        #RECONOCE SI ENTRA UN PAQUETE CON DESTINO A UNA DIRECCION MULTICAST
         if esMulticast(dst):
-            validoMulticast(dp,msg,pkt)
-
-
-
-    def validoMulticast(dp,msg,pkt):
-
-        eth = pkt[0]
-        dst = eth.dst
-        if (eth.ethertype == ether_types.ETH_TYPE_IP and dst != 'ff:ff:ff:ff:ff:ff'):
-            procesoMulticast(dp,msg,pkt)
+            if protocol != in_proto.IPPROTO_IGMP and self.groups[dst][in_port]=='True':
+                procesoMulticast()
         else:
-            #SOLO SE PROCESAN PAQUETES IPV4 MULTICAST
-            return
-
-
-    def procesoMulticast(dp,msg,pkt):
-        self.log('IVP4 Multicast Message')
-
-
-
-
-    def procesoOtros(dp,msg,pkt):
-        self.log('Se ignoran los siguientes paquetes: ')
-        for p in pkt.protocols:
-            self.log(str(p))
-
-
-    #SE VERIFICA SI EL DESTINO ES MULTICAST COMPARANDO CON LA MAC MULTICAST
-    def esMulticast(dst):
-        return (dst[0:2] == '01' or dst[0:5] == '33:33' or dst == 'ff:ff:ff:ff:ff:ff')
-
-
-
+            procesoOtros()
 
 
     @set_ev_cls(igmplib.EventMulticastGroupStateChanged,
