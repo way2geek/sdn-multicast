@@ -8,6 +8,13 @@ diccionario1.items()
 diccionario1.keys()
 diccionario1.values()
 
+if 'clave1' in diccionario1:
+    print "barbaro"
+
+if (diccionario1.get('clave1',0)==0):
+    print "No hay calve 1"
+
+# elif print "hay clave 1"
 
 
 #Como instanciar un diccionario
@@ -72,4 +79,6 @@ print personas['persona2'].values()
 if personas['persona1']['edad']=='90':
     print 'toy barbaro dio 90'
 
-# _mcast[group][port].values()
+
+if personas['persona1']['nombre']=='pepe':
+    print 'vamo pepe'
