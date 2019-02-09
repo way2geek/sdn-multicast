@@ -42,20 +42,35 @@ class MulticastController(app_manager.RyuApp):
         eth = pkt[0]
         dst = eth.dst
         if (eth.ethertype == ether_types.ETH_TYPE_IP and dst != 'ff:ff:ff:ff:ff:ff'):
-            procesoMulticast(dp,msg,pkt)
+            forwardMulticast(dp,msg,pkt)
         else:
             #SOLO SE PROCESAN PAQUETES IPV4 MULTICAST
             return
 
 
-    def procesoMulticast(dp,msg,pkt):
+    def forwardMulticast(self,dp,msg,pkt):
         self.log('IVP4 Multicast Message')
+        ofproto = dp.ofproto
+        parser = dp.ofproto_parser
+        action_buckets = []
+        ip = pkt.get_protocol(ipv4.ipv4)
+        ipdst = ip.dst
+
+        if ipdst in self.groups:
+            for port in self.groups:
+                if [ipdst][port] == 'True':
+                    self.log('Encontro puerto de grupo multicast')
+                    #action_buckets.append(parser.OFPActionOutput(port))
+                    pass#AGREGAR ACCION A ACTION BUCKET(DESTINO)
+
+
+
+
+
 
 
     def procesoOtros(dp,msg,pkt):
-        self.log('Se ignoran los siguientes paquetes: ')
-        for p in pkt.protocols:
-            self.log(str(p))
+        pass
 
 
     #SE VERIFICA SI EL DESTINO ES MULTICAST COMPARANDO CON LA MAC MULTICAST
@@ -95,10 +110,10 @@ class MulticastController(app_manager.RyuApp):
         dst = eth.dst
 
         if esMulticast(dst):
-            if protocol != in_proto.IPPROTO_IGMP and self.groups[dst][in_port]=='True':
-                procesoMulticast()
+            if protocol != in_proto.IPPROTO_IGMP:#and self.groups[dst][in_port]=='True':
+                validoMulticast(dp,msg,pkt)
         else:
-            procesoOtros()
+            procesoOtros(dp,msg,pkt)
 
 
     @set_ev_cls(igmplib.EventMulticastGroupStateChanged,
