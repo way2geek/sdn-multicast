@@ -13,10 +13,12 @@ from ryu.lib.packet import igmp
 from ryu.lib.packet import igmplib
 from ryu.lib.igmplib import IgmpQuerier
 
+
 class MulticastController(app_manager.RyuApp):
 
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     _CONTEXTS = {'igmplib': igmplib.IgmpLib}
+
 
     def __init__(self, *args, **kwargs):
         super(MulticastController, self).__init__(*args, **kwargs)
@@ -24,31 +26,15 @@ class MulticastController(app_manager.RyuApp):
         self._snoop.set_querier_mode(
             dpid=str_to_dpid('0000000000000001'), server_port=1)
 
-
-        self.groups = IgmpQuerier._mcast
+        self.groups = {}
+        groups = IgmpQuerier()._mcast.copy()
         self.subscribers = {} #ip_group -> subscriber -> [MODE (include = True, exclude = False) ip_sources]
         self.ip_2_mac = {}
 
 
-    #This function gets triggered before the topology controller flows are added
-    #But late enough to be able to remove flows
-    @set_ev_cls(ofp_event.EventOFPStateChange, [CONFIG_DISPATCHER])
-    def state_change_handler(self, ev):
-        dp = ev.datapath
-        ofp = dp.ofproto
-        parser = dp.ofproto_parser
-
-        #Delete any possible currently existing flows.
-        del_flows = parser.OFPFlowMod(dp, table_id=ofp.OFPTT_ALL, out_port=ofp.OFPP_ANY, out_group=ofp.OFPG_ANY, command=ofp.OFPFC_DELETE)
-        dp.send_msg(del_flows)
-
-        #Delete any possible currently existing groups
-        del_groups = parser.OFPGroupMod(datapath=dp, command=ofp.OFPGC_DELETE, group_id=ofp.OFPG_ALL)
-        dp.send_msg(del_groups)
-
-        #Make sure deletion is finished using a barrier before additional flows are added
-        barrier_req = parser.OFPBarrierRequest(dp)
-        dp.send_msg(barrier_req)
+    def log(self, message):
+        self.logger.info(message)
+        return
 
 
     #Conocimiento de los switches conectados en la red
@@ -65,8 +51,9 @@ class MulticastController(app_manager.RyuApp):
         cmd = parser.OFPFlowMod(datapath=dp, priority=0, match=match, instructions=instr)
         dp.send_msg(cmd)
 
+
     #Recibe un paquete
-    @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
+    @set_ev_cls(igmplib.EventPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):
         msg = ev.msg
         dp = msg.datapath
@@ -83,21 +70,42 @@ class MulticastController(app_manager.RyuApp):
             self.procesoOtros(dp,msg,pkt)
             return
 
-        if
-
+        #IGNORO PAQUETES LLDP
         if eth.ethertype == ether_types.ETH_TYPE_LLDP:
             return
 
+        #RECONOCE SI ENTRA UN PAQUETE CON DESTINO A UNA DIRECCION MULTICAST
         if esMulticast(dst):
+            validoMulticast(dp,msg,pkt)
+
+
+
+    def validoMulticast(dp,msg,pkt):
+
+        eth = pkt[0]
+        dst = eth.dst
+        if (eth.ethertype == ether_types.ETH_TYPE_IP and dst != 'ff:ff:ff:ff:ff:ff'):
             procesoMulticast(dp,msg,pkt)
+        else:
+            #SOLO SE PROCESAN PAQUETES IPV4 MULTICAST
+            return
+
+
+    def procesoMulticast(dp,msg,pkt):
+        self.log('IVP4 Multicast Message')
 
 
 
 
+    def procesoOtros(dp,msg,pkt):
+        self.log('Se ignoran los siguientes paquetes: ')
+        for p in pkt.protocols:
+            self.log(str(p))
 
 
-
-
+    #SE VERIFICA SI EL DESTINO ES MULTICAST COMPARANDO CON LA MAC MULTICAST
+    def esMulticast(dst):
+        return (dst[0:2] == '01' or dst[0:5] == '33:33' or dst == 'ff:ff:ff:ff:ff:ff')
 
 
 
