@@ -59,6 +59,7 @@ if __name__ == '__main__':
     h4.cmd('echo 2 > /proc/sys/net/ipv4/conf/h4-eth0/force_igmp_version')
     h5.cmd('echo 2 > /proc/sys/net/ipv4/conf/h5-eth0/force_igmp_version')
     h6.cmd('echo 2 > /proc/sys/net/ipv4/conf/h6-eth0/force_igmp_version')
+
     #Establezco la puerta de enlace predeterminada para los paquetes IGMP
     h1.cmd('ip route add default via 172.16.10.254')
     h2.cmd('ip route add default via 172.16.20.254')
