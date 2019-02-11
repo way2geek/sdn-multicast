@@ -16,14 +16,14 @@ class  SimpleSwitchIgmp13 ( Simple_switch_13 . SimpleSwitch13 ):
     _CONTEXTS  =  { 'Igmplib' :  Igmplib . IgmpLib }
 
     def  __init__ ( self ,  * args ,  ** kwargs ):
-        super ( SimpleSwitchIgmp13 ,  self ) . __init__ ( * args ,  ** kwargs ) 
+        super ( SimpleSwitchIgmp13 ,  self ) . __init__ ( * args ,  ** kwargs )
         self . Mac_to_port  =  {}
         self . _Snoop  =  kwargs [ 'Igmplib' ]
         self . _Snoop . Set_querier_mode (
             dpid = str_to_dpid ( '0000000000000001'),  server_port = 2 )
 
     Attoset_ev_cls ( Igmplib . EventPacketIn ,  MAIN_DISPATCHER )
-    Def  _Packet_in_handler ( Self ,  Ev ):
+    def  _Packet_in_handler ( Self ,  Ev ):
         Msg  =  Ev . Msg
         Datapath  =  Msg . Datapath
         Ofproto  =  Datapath . Ofproto
