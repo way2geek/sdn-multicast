@@ -14,61 +14,60 @@ def _imprimrMenu():
   print("\t3) Tolologia    \n");
   print("\t4) Topologia    \n");
 
-def _cargaDeParametros(topologiaSeleccionada):
-    switch (topologiaSeleccionada):
-        case 1:
-            #llamar funcion especifica para lineal
-            cargaDeParametrosLinear()
-            break;
-        case 2:
-            #llamar funcion especifica para arbol
-            cargaDeParametrosArbol()
-            break;
-        case 3:
-            #Llamar funcion especifica
-            cargaDeParametros3()
-            break;
-        case 4:
-            #Llamar funcion especifica
-            cargaDeParametros4()
-            break;
+# def _cargaDeParametros(topologiaSeleccionada):
+#     switch (topologiaSeleccionada):
+#         case 1:
+#             #llamar funcion especifica para lineal
+#             cargaDeParametrosLinear()
+#             break;
+#         case 2:
+#             #llamar funcion especifica para arbol
+#             cargaDeParametrosArbol()
+#             break;
+#         case 3:
+#             #Llamar funcion especifica
+#             cargaDeParametros3()
+#             break;
+#         case 4:
+#             #Llamar funcion especifica
+#             cargaDeParametros4()
+#             break;
 
 
 
 
 
-def _cargaDeParametrosLinear()
-
-
-
-def _cargaDeParametrosArbol()
-
-
-
-def _cargaDeParametros3()
-
-
-
-def _cargaDeParametros4()
-
-
-
-
+# def _cargaDeParametrosLinear()
+#
+#
+#
+# def _cargaDeParametrosArbol()
+#
+#
+#
+# def _cargaDeParametros3()
+#
+#
+#
+# def _cargaDeParametros4()
+#
+# def _leerIngreso()
 
 
 if __name__ == '__main__':
-    _initialize_clients_from_storage()
+    opcion = -1
 
-    while (opcion !=0)
+    while opcion != 0:
         imprimirMenu();
-
         print("Seleccione una opcion.")
-        opcion = leerOpcion();
+        # opcion = leerIngreso();
+        opcion =1 #para probarlo
+        if opcion == '1'
+            print ('Seleccioné opcion Linear')
+        if opcion == '2'
+            print ('Seleccioné opcion Arbol')
+        if opcion =='3'
+            print ('Seleccion opcion 3')
 
-        switch (opcion)
-
-          case 1:
-
-          case 2:
-
-          case 3:
+        else:
+            print('Ingreso invalido.')
