@@ -27,5 +27,20 @@ if __name__ == '__main__':
     topo = Topologia()
     c1 = RemoteController('c1', ip='127.0.0.1')
     net = Mininet(topo=topo, controller=c1)
+
+    h1 = net.get('h1')
+    h2 = net.get('h2')
+    s1 = net.get('s1')
+
+
+    h1.cmd('echo 2 > /proc/sys/net/ipv4/conf/h1s1-eth0/force_igmp_version')
+    h1.cmd('ip route add default via 191.168.1.254')
+
+
+    h2.cmd('echo 2 > /proc/sys/net/ipv4/conf/h1s1-eth0/force_igmp_version')
+    h2.cmd('ip route add default via 191.168.1.254')
+
+    s1.cmd('ovs-vsctl set Bridge s2 protocols=OpenFlow13')
+
     net.start()
     CLI(net)
