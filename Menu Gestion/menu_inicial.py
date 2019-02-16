@@ -22,7 +22,7 @@ def _cargaDeParametros(topologiaSeleccionada):
 
         elif (topologiaSeleccionada == '2'):
             #llamar funcion especifica para arbol
-            cargaDeParametrosArbol()
+            _cargaDeParametrosArbol()
         elif (topologiaSeleccionada == '3'):
             #llamar funcion especifica
 
