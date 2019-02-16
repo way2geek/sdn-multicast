@@ -27,7 +27,8 @@ if __name__ == '__main__':
     topo = Topologia()
     c1 = RemoteController('c1', ip='127.0.0.1')
     net = Mininet(topo=topo, controller=c1)
-
+    net.start()
+    
     h1 = net.get('h1')
     h2 = net.get('h2')
     s1 = net.get('s1')
@@ -42,5 +43,5 @@ if __name__ == '__main__':
 
     s1.cmd('ovs-vsctl set Bridge s2 protocols=OpenFlow13')
 
-    net.start()
+
     CLI(net)
