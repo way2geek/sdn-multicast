@@ -1,0 +1,38 @@
+
+
+{
+  "__COMMENT" : "Descripcion de la red utilizada por la aplicacion y el script de Mininet",
+  "__COMMENT" : "Cada switch es un diccionario donde se especifica con cuales switches
+                se encuentra conectado y en que puertos",
+  "__COMMENT" : "dpids asigna los pids a los switches de la red",
+  "__COMMENT" : "Cada host es un diccionario donde se especifica con que switches
+                se encuentra conectado, en que puerto y su direccion IP",
+  "__COMMENT" : "Cada servidor es un diccionario donde se especifican los mismos tipos
+                de atributos que en los hosts",
+
+
+  "switches": {
+      "s1":{"s2": 1, "s3": 2},
+      "s2":{"s1": 1, "s3": 2},
+      "s3":{"s2": 1}
+  },
+
+  "dpids": {
+      "s1": 1,
+      "s2": 2,
+      "s3": 3
+  },
+
+  "hosts": {
+    "h1": {"switch":"s1", "port": 3, "ip": "10.0.0.1"},
+    "h2": {"switch":"s1", "port": 4, "ip": "10.0.0.1"},
+    "h3": {"switch":"s2", "port": 3, "ip": "10.0.0.1"},
+    "h4": {"switch":"s3", "port": 3, "ip": "10.0.0.1"},
+    "h5": {"switch":"s3", "port": 4, "ip": "10.0.0.1"}
+  },
+
+  "servidores": {
+      "S1": { "switch": "s2", "port":4, "ip":"10.0.0.10"},
+      "S2": { "switch": "s3", "port":5, "ip":"10.0.0.20"}
+  }
+}
