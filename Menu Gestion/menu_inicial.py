@@ -1,7 +1,6 @@
 import sys
 import os
 
-
 opcion = -1
 
 def _imprimrMenu():
