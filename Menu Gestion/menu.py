@@ -43,28 +43,15 @@ def main():
 
         if opcion == 1:
             print('Linear topology')
+            _cargaDeParametrosLinear()
         elif opcion == 2:
             print('Tree topology')
+            _cargaDeParametrosArbol()
         elif opcion == 3:
             print('game over')
             ok = False
         else:
             print('Ingrese una opcion valida')
-
-#def _cargaDeParametros(topologiaSeleccionada):
-#    switch (topologiaSeleccionada):
-#        if (topologiaSeleccionada == '1'):
-#            #llamar funcion especifica para lineal
-#            _cargaDeParametrosLinear()
-
-#        elif (topologiaSeleccionada == '2'):
-            #llamar funcion especifica para arbol
-#            _cargaDeParametrosArbol()
-#        elif (topologiaSeleccionada == '3'):
-            #llamar funcion especifica
-
-#        elif (topologiaSeleccionada == '4'):
-            #llamar funcion especifica
 
 
 if __name__ == '__main__':
