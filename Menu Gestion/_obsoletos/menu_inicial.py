@@ -1,81 +1,59 @@
-#!/usr/bin/python3
-
 import sys
 import os
 
+opcion = -1
 
-def pedirNumeroEntero():
+def _imprimrMenu():
 
-    correcto=False
-    num=0
-    while(not correcto):
-        try:
-            num = int(input("Introduce un numero entero: "))
-            correcto=True
-        except ValueError:
-            print('Error, introduce un numero entero')
+  print("- - \tMENU PRINCIPAL\t - - \n");
+  print("Seleccione la topologia deseada o ingrese 0 para salir:\n");
 
-    return num
+  print("\t1) Topologia linear.\n");
+  print("\t2) Topologia de arbol.\n");
+  print("\t3) Tolologia    \n");
+  print("\t4) Topologia    \n");
 
+def _cargaDeParametros(topologiaSeleccionada):
+    switch (topologiaSeleccionada):
+        if (topologiaSeleccionada == '1'):
+            #llamar funcion especifica para lineal
+            _cargaDeParametrosLinear()
 
-def imprimirMenu():
-	print ("1. Opcion 1")
-	print ("2. Opcion 2")
-	print ("3. Opcion 3")
-	print ("4. Salir")
-
-	print ("Elige una opcion")
-
-
-#def _cargaDeParametros(topologiaSeleccionada):
-#    switch (topologiaSeleccionada):
-#        if (topologiaSeleccionada == '1'):
-#            #llamar funcion especifica para lineal
-#            _cargaDeParametrosLinear()
-
-#        elif (topologiaSeleccionada == '2'):
+        elif (topologiaSeleccionada == '2'):
             #llamar funcion especifica para arbol
-#            _cargaDeParametrosArbol()
-#        elif (topologiaSeleccionada == '3'):
+            _cargaDeParametrosArbol()
+        elif (topologiaSeleccionada == '3'):
             #llamar funcion especifica
 
-#        elif (topologiaSeleccionada == '4'):
+        elif (topologiaSeleccionada == '4'):
             #llamar funcion especifica
 
 
-def _cargaDeParametrosLinear():
-    pass
+def _cargaDeParametrosLinear()
 
-def _cargaDeParametrosArbol():
-    pass
+def _cargaDeParametrosArbol()
 
-def _cargaDeParametros3():
-    pass
+def _cargaDeParametros3()
 
-def _cargaDeParametros4():
-    pass
+def _cargaDeParametros4()
+
+def _leerIngreso()
 
 
 if __name__ == '__main__':
+    opcion = -1
 
-    salir = False
-    opcion = 0
+    while opcion != 0:
+        imprimirMenu();
+        print("Seleccione una opcion.")
+        # opcion = leerIngreso();
+        opcion =1 #para probarlo
+        if opcion == '1'
+            print ('Seleccioné opcion Linear')
+        elif opcion == '2'
+            print ('Seleccioné opcion Arbol')
+        elif opcion =='3'
+            print ('Seleccion opcion 3')
 
-    while not salir:
-
-	    imprimirMenu()
-
-        opcion = pedirNumeroEntero()
-
-	    if opcion == 1:
-	        print ("Opcion 1")
-	    elif opcion == 2:
-	        print ("Opcion 2")
-	    elif opcion == 3:
-	        print("Opcion 3")
-	    elif opcion == 4:
-	        salir = True
-	    else:
-	        print ("Introduce un numero entre 1 y 3")
-
-	print ("Fin")
+        else:
+            print('Ingreso invalido.')
