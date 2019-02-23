@@ -11,11 +11,9 @@ def topoBuild():
 
     net = Mininet()
 
-    topojson = {}
-    with open('topo1.json') as json_file:
-        print('HOLAAAAAAAA')
-        topojson = json.load(json_file)
-        
+    filejson = open("topo1.json")
+    topojson = json.load(filejson)
+
     existe_link = {}
 
     #cargo HOSTS

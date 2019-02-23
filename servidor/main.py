@@ -106,9 +106,8 @@ if __name__ == '__main__':
     _initialize_clients_from_storage()
 
     _print_welcome()
-    command = input()
-    command = command.upper()
-
+    command = input().upper()
+    
     if command == 'C':
         client = _consultaDatosCliente()
         create_client(client)
