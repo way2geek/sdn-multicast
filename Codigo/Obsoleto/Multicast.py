@@ -26,8 +26,8 @@ class MulticastController(app_manager.RyuApp):
         self._snoop.set_querier_mode(
             dpid=str_to_dpid('0000000000000001'), server_port=1)
 
-        self.groups = {}
-        groups = IgmpQuerier().mcast.copy()
+        self.groups = IgmpQuerier()._mcast
+        #groups = IgmpQuerier().mcast.copy()
         #self.subscribers = {} #ip_group -> subscriber -> [MODE (include = True, exclude = False) ip_sources]
         #self.ip_2_mac = {}
 
@@ -48,23 +48,20 @@ class MulticastController(app_manager.RyuApp):
             return
 
 
-    def forwardMulticast(self,dp,msg,pkt):
-        self.log('IVP4 Multicast Message')
-        ofproto = dp.ofproto
-        parser = dp.ofproto_parser
-        action_buckets = []
-        ip = pkt.get_protocol(ipv4.ipv4)
-        ipdst = ip.dst
+#    def forwardMulticast(self,dp,msg,pkt):
+#        self.log('IVP4 Multicast Message')
+#        ofproto = dp.ofproto
+#        parser = dp.ofproto_parser
+#        action_buckets = []
+#        ip = pkt.get_protocol(ipv4.ipv4)
+#        ipdst = ip.dst
 
-        if ipdst in self.groups:
-            for port in self.groups:
-                if [ipdst][port] == 'True':
-                    self.log('Encontro puerto de grupo multicast')
+#        if ipdst in self.groups:
+#            for port in self.groups:
+#                if [ipdst][port] == 'True':
+#                    self.log('Encontro puerto de grupo multicast')
                     #action_buckets.append(parser.OFPActionOutput(port))
-                    pass#AGREGAR ACCION A ACTION BUCKET(DESTINO)
-
-
-
+#                    pass#AGREGAR ACCION A ACTION BUCKET(DESTINO)
 
 
 

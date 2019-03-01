@@ -1,5 +1,13 @@
 import sys
 import os
+import json
+
+
+#datos de topologia
+switches = {}
+hosts = {}
+servers = {}
+dpids = {} # datapah id de switches
 
 
 def imprimirMenu():
@@ -31,6 +39,43 @@ def _cargaDeParametros3():
 
 def _cargaDeParametros4():
     pass
+
+
+def import_jsonTopo(filename):
+    global switches
+    global hostsswitches
+    global servers
+
+    filejson = open(filename)
+    topojson = json.load(filejson)
+
+    switches = topojson['switches']
+    hosts = topojson['hosts']
+    servers = topojson['servidores']
+    dpids = topojson['dpids']
+
+
+def printDic(diccionario):
+    for grupo, g_info in diccionario.items():
+        print("\nGrupo Multicast:", grupo)
+
+        for key in g_info:
+            print(key + ':', g_info[key])
+
+
+def obtenerPuertos(gruposM, direccionM, switch_id):
+    aux = []
+    for grupo, g_info in gruposM.items():
+        if direccionM == grupo:
+            #g_info = direccionM[grupo] #toma diccionarios de cada switch en el grupo multicast
+            for s_id, s_info in g_info.items():
+                if s_id == switch_id:
+                    print(s_id)
+                    for port, value in enumerate(s_info):
+                        aux.append(port+1)
+                        print('Puerto: {}, Estado: {}.'.format(port+1, value))
+
+    return aux
 
 
 def main():

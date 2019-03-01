@@ -31,8 +31,13 @@ def obtenerPuertos(gruposM, direccionM, switch_id):
                 if s_id == switch_id:
                     print(s_id)
                     for port, value in enumerate(s_info):
+                        aux.append(port+1)
                         print('Puerto: {}, Estado: {}.'.format(port+1, value))
 
+    return aux
 
+puertos1 = obtenerPuertos(gruposM, '225.0.30.2', 's1')
+puertos2 = obtenerPuertos(gruposM, '225.0.31.2', 's1')
 
-obtenerPuertos(gruposM, '225.0.30.2', 's1')
+print(puertos1)
+print(puertos2)
