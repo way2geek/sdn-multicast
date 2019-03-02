@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     #Establezco la version OPenFlow1.3 en los switches
     s1.cmd('ovs-vsctl set Bridge s1 protocol=OpenFlow13')
-    #s2.cmd('ovs-vsctl set Bridge s2 protocol=OpenFlow13')
+    s2.cmd('ovs-vsctl set Bridge s2 protocol=OpenFlow13')
 
 
     CLI(net)
