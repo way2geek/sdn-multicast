@@ -11,7 +11,7 @@ def topoBuild():
 
     net = Mininet()
 
-    filejson = open("/home/bruno/Escritorio/sdn-multicast-version2/Topologias/json/topo1.json")
+    filejson = open("/home/bruno/Escritorio/sdn-multicast-version2/Topologias/json/topoLinear.json")
     topojson = json.load(filejson)
 
     existe_link = {}
@@ -20,14 +20,17 @@ def topoBuild():
     for host in topojson['hosts']:
         net.addHost(host, ip = topojson['hosts'][host]['ip'])
 
+
     #cargo SWITCHES
     for switch in topojson['switches']:
         net.addSwitch(switch, cls=OVSSwitch, protocols="OpenFlow13")
         existe_link[switch] = {}
 
+
     #cargo SERVIDORES
     for servidor in topojson['servidores']:
         net.addHost(servidor, ip=topojson['servidores'][servidor]['ip'])
+
 
     #Creo links entre SWITCHES
     for swname in topojson['switches']:
@@ -46,14 +49,32 @@ def topoBuild():
         host_dic = topojson['hosts'][host]
         net.addLink(host, host_dic['switch'], port2 = host_dic['port'])
 
+
     for servidor in topojson['servidores']:
         servidor_dic = topojson['servidores'][servidor]
         net.addLink(servidor, servidor_dic['switch'], port2 = servidor_dic['port'])
 
 
     # add controller and start network
+    setLogLevel('info')
     net.addController(controller=RemoteController, port=6633)
     net.start()
+
+    for host in topojson['hosts']:
+        h = net.get(host)
+        h.cmd('echo 2 > /proc/sys/net/ipv4/conf/{}-eth0/force_igmp_version'.format(host))
+        h.cmd('ip route add default via 10.0.0.254')
+
+    #cargo SWITCHES
+    for switch in topojson['switches']:
+        s = net.get(switch)
+        s.cmd('ovs-vsctl set Bridge s1 protocol=OpenFlow13')
+
+    #cargo SERVIDORES
+    for servidor in topojson['servidores']:
+        s = net.get(servidor)
+        s.cmd('echo 2 > /proc/sys/net/ipv4/conf/{}-eth0/force_igmp_version'.format(servidor))
+        s.cmd('ip route add default via 10.0.0.254')
 
     # start CLI
     CLI(net)
