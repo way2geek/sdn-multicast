@@ -24,6 +24,7 @@ class App(app_manager.RyuApp):
 
 
     def packet_in_handler():
+
         pass
 
 
@@ -35,16 +36,50 @@ class App(app_manager.RyuApp):
         pass
 
 
-    def esMulticast():
+    #SE VERIFICA SI EL DESTINO ES MULTICAST COMPARANDO CON LA MAC MULTICAST
+    def esMulticast(dst):
+        return (dst[0:2] == '01' or dst[0:5] == '33:33' or dst == 'ff:ff:ff:ff:ff:ff')
+
+
+    def validoMulticast(dp,msg,pkt):
+
+        eth = pkt[0]
+        dst = eth.dst
+        if (eth.ethertype == ether_types.ETH_TYPE_IP and dst != 'ff:ff:ff:ff:ff:ff'):
+            forwardMulticast(dp,msg,pkt)
+        else:
+            #SOLO SE PROCESAN PAQUETES IPV4 MULTICAST
+            return
+
+
+    def log(self, message):
+        self.logger.info(message)
+        return
+
+
+    def set_flow_entry():
         pass
 
 
-    def validoMulticast():
+    def del_flow_entry():
         pass
 
 
-    def logger():
+    def groupTable():
         pass
 
 
-    
+
+    #Conocimiento de los switches conectados en la red
+    @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
+    def switch_features_handler(self, ev):
+        dp = ev.msg.datapath
+        ofp = dp.ofproto
+        parser = dp.ofproto_parser
+
+        #Se agrega miss table
+        match = parser.OFPMatch()
+        actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER, ofp.OFPCML_NO_BUFFER)]
+        instr = [parser.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions)]
+        cmd = parser.OFPFlowMod(datapath=dp, priority=0, match=match, instructions=instr)
+        dp.send_msg(cmd)
