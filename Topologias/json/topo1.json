@@ -27,3 +27,23 @@
       "S2": { "switch": "s3", "port":5, "ip":"10.0.0.20"}
   }
 }
+
+"_comment": "
+
+Topologia lineal 3 switces 5 hosts
+
+s1:
+  puerto 1: s2
+  puerto 3: h1
+  puerto 4: h2
+
+s2:
+  puerto 1: s1
+  puerto 3: h3
+
+s3:
+  puerto 1: s2
+  puerto 3: h4
+  puerto 4: h5
+
+"
