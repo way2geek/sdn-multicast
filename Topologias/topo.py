@@ -11,7 +11,7 @@ def topoBuild():
 
     net = Mininet()
 
-    filejson = open("topo1.json")
+    filejson = open("/home/bruno/Escritorio/sdn-multicast-version2/Topologias/json/topo1.json")
     topojson = json.load(filejson)
 
     existe_link = {}
