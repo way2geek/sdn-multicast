@@ -11,7 +11,32 @@ from ryu.lib.packet import ipv4
 from ryu.lib.packet import in_proto
 from ryu.lib.igmplib import IgmpSnooper
 
-
+grupos = {
+    12:{
+        '225.0.0.1':{
+                    'replied':True,
+                    'leave':False,
+                    'ports':{
+                            1:{
+                               'out':True,
+                               'in':False
+                              }
+                            }
+                    }
+       },
+      13:{
+          '225.0.0.5':{
+                      'replied':True,
+                      'leave':False,
+                      'ports':{
+                              1:{
+                                 'out':True,
+                                 'in':False
+                                }
+                              }
+                      }
+         }
+}
 #aplicacion de ruteo multicast
 #es padre de la aplicacion igmp
 class App(app_manager.RyuApp):
