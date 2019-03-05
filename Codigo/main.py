@@ -11,6 +11,7 @@ from ryu.lib.packet import ipv4
 from ryu.lib.packet import in_proto
 from ryu.lib.igmplib import IgmpSnooper
 from .aux import AuxApp
+from . import host_cache
 
 #aplicacion de ruteo multicast
 class App(app_manager.RyuApp, AuxApp):
@@ -22,9 +23,36 @@ class App(app_manager.RyuApp, AuxApp):
         self.groups = IgmpSnooper()._to_hosts.copy()
 
 
+    #se instalan las flow tables y group tables en los witches al conocerlos
+    @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
+    def switch_features_handler(self, ev):
+        "Handle new datapaths attaching to Ryu"
+        dp = ev.msg.datapath
+        ofp = dp.ofproto
+        parser = dp.ofproto_parser
 
+        msgs = self.add_datapath(ev.msg.datapath)
+
+        self.send_msgs(ev.msg.datapath)
+
+
+    @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler():
+        dp = ev.msg.datapath
+        in_port = ev.msg.match['in_port']
 
+        # Parse the packet
+        pkt = packet.Packet(ev.msg.data)
+        eth = pkt.get_protocols(ethernet.ethernet)[0]
+        # Ensure this host was not recently learned to avoid flooding the switch
+        # with the learning messages if the learning was already in process.
+        if not self.host_cache.is_new_host(dp.id, in_port, eth.src):
+            return
+
+
+
+
+    def add_datapath(datapaht):
         pass
 
 
@@ -52,11 +80,6 @@ class App(app_manager.RyuApp, AuxApp):
             return
 
 
-    def log(self, message):
-        self.logger.info(message)
-        return
-
-
     def set_flow_entry():
         pass
 
@@ -65,5 +88,6 @@ class App(app_manager.RyuApp, AuxApp):
         pass
 
 
-    def groupTable(self, datapath):
+    #borrar los flujos en grouptables y flowtables de todos los switches
+    def clean_all_flows(dp):
         pass

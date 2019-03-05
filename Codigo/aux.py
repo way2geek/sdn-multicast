@@ -55,3 +55,9 @@ class AuxApp(object):
         if eth_type != None:
             kwargs['eth_type'] = eth_type
         return dp.ofproto_parser.OFPMatch(**kwargs)
+
+
+    @staticmethod
+    def log(self, message):
+        self.logger.info(message)
+        return
