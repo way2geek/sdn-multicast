@@ -10,13 +10,14 @@ from ryu.lib.packet import ether_types
 from ryu.lib.packet import ipv4
 from ryu.lib.packet import in_proto
 from ryu.lib.igmplib import IgmpSnooper
+from .aux import AuxApp
 
 #aplicacion de ruteo multicast
-#es padre de la aplicacion igmp
-class App(app_manager.RyuApp):
+class App(app_manager.RyuApp, AuxApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
     def __init__(self, *args, **kwargs):
+        super(App, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
         self.groups = IgmpSnooper()._to_hosts.copy()
 
@@ -65,21 +66,4 @@ class App(app_manager.RyuApp):
 
 
     def groupTable(self, datapath):
-        
-
-
-
-
-    #Conocimiento de los switches conectados en la red
-    @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
-    def switch_features_handler(self, ev):
-        dp = ev.msg.datapath
-        ofp = dp.ofproto
-        parser = dp.ofproto_parser
-
-        #Se agrega miss table
-        match = parser.OFPMatch()
-        actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER, ofp.OFPCML_NO_BUFFER)]
-        instr = [parser.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions)]
-        cmd = parser.OFPFlowMod(datapath=dp, priority=0, match=match, instructions=instr)
-        dp.send_msg(cmd)
+        pass
