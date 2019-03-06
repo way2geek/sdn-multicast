@@ -19,8 +19,11 @@
 # ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+"""
+Base Application Class for SimpleSwitch 2.0 Apps
+"""
 
-from . import config, auxHost
+from . import config, util
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
@@ -28,9 +31,7 @@ from ryu.controller.handler import set_ev_cls
 from ryu.lib.packet import ethernet, ether_types as ether, packet
 from ryu.ofproto import ofproto_v1_3
 
-
-class AuxApp(object):
-
+class SS2App(object):
     "Base methods for SS2 RyuApp classes"
 
     ## Static Helper Methods
