@@ -1,0 +1,26 @@
+A continuación se describen las topologías de este directorio
+de acuerdo a su número de referencia:
+
+
+#:  |         Explicación:
+-------------------------------
+1)  |
+    |
+    |
+2)  |
+    |
+    |
+3)  |
+    |
+    |
+4)  |
+    |
+    |
+5)  |
+    |
+    |
+6)  |
+    |
+    |
+    |
+    |
