@@ -54,10 +54,11 @@ class App(app_manager.RyuApp, AuxApp):
         dp = ev.msg.datapath
         ofp = dp.ofproto
         parser = dp.ofproto_parser
+        pkt = packet.Packet(ev.msg.data)
 
         msgs = self.add_datapath(ev.msg.datapath)
 
-        self.send_msgs(ev.msg.datapath)
+        self.send_msgs(ev.msg.datapath, pkt)
 
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
@@ -85,11 +86,11 @@ class App(app_manager.RyuApp, AuxApp):
         self.send_msgs(dp, msgs)
 
 
-    def add_datapath(self, dp):
+    def add_datapath(self, dp, pkt):
         "Add the specified datapath to our app by adding default rules"
 
         msgs = self.clean_all_flows(dp)
-        msgs += self.add_default_flows(dp)
+        msgs += self.add_default_flows(dp, pkt)
         return msgs
 
 
@@ -122,8 +123,12 @@ class App(app_manager.RyuApp, AuxApp):
 
         eth = pkt[0]
         dst = eth.dst
+
         if (eth.ethertype == ether_types.ETH_TYPE_IP and dst != 'ff:ff:ff:ff:ff:ff'):
-            msgs = send_group_flow(dp,msg,dst)
+            ip = pkt.get_protocol(ipv4.ipv4)
+            srcip = ip.src
+            dstip = ip.dst
+            msgs = send_group_flow(dp,msg,dstip)
         else:
             #SOLO SE PROCESAN PAQUETES IPV4 MULTICAST
             pass
@@ -135,7 +140,7 @@ class App(app_manager.RyuApp, AuxApp):
         pass
 
 
-    def add_default_flows(self, dp):
+    def add_default_flows(self, dp, packet):
         "Add the default flows needed for this environment"
 
         ofp = dp.ofproto
@@ -178,7 +183,7 @@ class App(app_manager.RyuApp, AuxApp):
                               instructions=instructions)]
 
 
-        "MODIFICAR PARA ENVIAR CONTENIDO MULTICAST A GROUP TABLE"
+
         ## TABLE_ETH_SRC
         # Table-miss sends to controller and sends to TABLE_ETH_DST
         # We send to TABLE_ETH_DST because the SRC rules will hard timeout
@@ -193,22 +198,29 @@ class App(app_manager.RyuApp, AuxApp):
                               instructions=instructions)]
 
 
+        "MODIFICAR PARA ENVIAR CONTENIDO MULTICAST A GROUP TABLE"
+        eth = packet.get_protocols(ethernet.ethernet)[0]
+        if esMulticast(eth.dst):
+            actions = [self.action_output(dp, ofp.OFPP_CONTROLLER, max_len=256)]
+            instructions = [self.apply_actions(dp, actions),
+                            self.goto_table(dp, self.config.group_table_multicast)]
+            
+
         #QUE HACER CON MULTICAST
-        flood_addrs = [
-            ('01:80:c2:00:00:00', '01:80:c2:00:00:00'), # 802.x
-            ('01:00:5e:00:00:00', 'ff:ff:ff:00:00:00'), # IPv4 multicast
-            ('33:33:00:00:00:00', 'ff:ff:00:00:00:00'), # IPv6 multicast
-            ('ff:ff:ff:ff:ff:ff', None) # Ethernet broadcast
-        ]
-        actions = [self.action_output(dp, ofp.OFPP_CONTROLLER, max_len=256)]
-        instructions = [self.apply_actions(dp, actions),
-                        self.goto]
-        for eth_dst in flood_addrs:
-            match = self.match(dp, eth_dst=eth_dst)
-            msgs += [self.flowmod(dp, self.config.table_eth_dst,
-                                  match=match,
-                                  priority=self.config.priority_max,
-                                  instructions=instructions)]
+        #flood_addrs = [
+        #    ('01:80:c2:00:00:00', '01:80:c2:00:00:00'), # 802.x
+            #('01:00:5e:00:00:00', 'ff:ff:ff:00:00:00'), # IPv4 multicast
+            #('33:33:00:00:00:00', 'ff:ff:00:00:00:00'), # IPv6 multicast
+        #    ('ff:ff:ff:ff:ff:ff', None) # Ethernet broadcast
+        #]
+        #actions = [self.action_output(dp, ofp.OFPP_CONTROLLER, max_len=256)]
+        #instructions = [self.apply_actions(dp, actions)]
+        #for eth_dst in flood_addrs:
+        #    match = self.match(dp, eth_dst=eth_dst)
+        #    msgs += [self.flowmod(dp, self.config.table_eth_dst,
+        #                          match=match,
+        #                          priority=self.config.priority_max,
+        #                          instructions=instructions)]
 
         # Table-miss floods
         match = self.match(dp)
@@ -222,6 +234,7 @@ class App(app_manager.RyuApp, AuxApp):
 
 
     def send_group_flow(self, dp, msg, dst):
+        "Agrega flows para el trafico multicast"
         pass
 
 
@@ -235,6 +248,7 @@ class App(app_manager.RyuApp, AuxApp):
                              match=match,
                              instructions=instructions,
                              priority=self.config.priority_high)]
+
 
     def add_eth_dst_flow(self, dp, out_port, eth_dst):
         "Add flow to forward packet sent to eth_dst to out_port"
