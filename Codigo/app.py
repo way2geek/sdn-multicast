@@ -9,7 +9,8 @@ from ryu.lib.packet import ether_types
 from ryu.lib.packet import ipv4
 from ryu.lib.packet import in_proto
 from ryu.lib.igmplib import IgmpSnooper
-
+from . import config
+from .auxApp import AuxApp
 
 class App(app_manager.RyuApp, AuxApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -64,7 +65,7 @@ class App(app_manager.RyuApp, AuxApp):
     def add_datapath(self, dp, pkt):
         "Add the specified datapath to our app by adding default rules"
 
-        #msgs = self.clean_all_flows(dp)
+        msgs = self.clean_all_flows(dp)
         msgs += self.add_default_flows(dp, pkt)
         return msgs
 
@@ -135,8 +136,30 @@ class App(app_manager.RyuApp, AuxApp):
                              priority=self.config.priority_high)]
 
 
-    def send_group_flow(dp, msg, dstip):
+    def remove_group_bucket():
+        """CUANDO SE BORRA UN INTEGRANTE O UN GRUPO"""
         pass
+
+
+    def get_group_out_ports(self, dp, dstip):
+        """SE OBTIENEN LOS PUERTOS DE SALIDA CORRESPONDIENTES AL GRUPO Y AL SWITCH"""
+        pass
+
+
+    def send_group_flow(self, dp, msg, dstip):
+        """SE ENVIA EL TRAFICO MULTICAST A TRAVES DE LOS PUERTOS CORRESPONDIENTES SEGUN GRUPOS"""
+        ofproto = dp.ofproto
+        parser = dp.ofproto_parser
+        buckets = []
+        ports = []
+        ports = get_group_out_ports(dp, dstip)
+        for port in ports:
+            buckets.append(parser.OFPActionOutput(port))
+
+        return[self.groupMod(dp, self.config.group_table_multicast,
+                             command = ofproto.OFPGC_ADD,
+                             type = ofproto.OFPGT_ALL,
+                             buckets = buckets)]
 
 
     def add_default_flows(self, dp, packet):
@@ -195,7 +218,7 @@ class App(app_manager.RyuApp, AuxApp):
                               instructions=instructions)]
 
 
-        "ENVIO CONTENIDO MULTICAST A GROUP TABLE"
+        "ENVIO TRAFICO MULTICAST A GROUP TABLE"
         eth = packet.get_protocols(ethernet.ethernet)[0]
         if self.esMulticast(eth.dst):
             msgs += [self.groupMod(dp,self.config.group_table_multicast)]

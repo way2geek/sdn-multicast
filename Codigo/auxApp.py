@@ -110,18 +110,18 @@ class AuxApp(object):
         return tables
 
 
-    def groupMod(self, dp, group_id, command=None, type = None, bucket = None):
+    def groupMod(self, dp, group_id, command=None, type = None, buckets = None):
 
         mod_kwargs = {
             'datapath': dp,
             'group_id': group_id,
             'command': command or dp.ofproto.OFPGC_ADD,
-            'cookie': self.config.group_cookie
+            #'cookie': self.config.group_cookie
         }
         if type != None:
             mod_kwargs['type'] = type
-        if bucket != None:
-            mod_kwargs['bucket'] = bucket
+        if buckets != None:
+            mod_kwargs['buckets'] = buckets
 
         return dp.ofproto_parser.OFPGroupMod(**mod_kwargs)
 
