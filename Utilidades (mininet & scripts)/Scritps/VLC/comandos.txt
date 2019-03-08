@@ -1,3 +1,10 @@
 :sout=#udp{dst=224.0.0.50:9090} :sout-all :sout-keep
 
 :sout=#udp{dst=224.0.0.90:9090} :sout-all :sout-keep
+
+
+Para recibir:
+  vlc udp://@225.0.0.1
+
+Para enviar:
+  vlc video.mp4 --sout udp:@225.0.0.1
