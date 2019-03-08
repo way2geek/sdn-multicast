@@ -20,7 +20,7 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import config, auxHost
+from . import config
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
@@ -42,12 +42,14 @@ class AuxApp(object):
         for msg in msgs:
             dp.send_msg(msg)
 
+
     @staticmethod
     def apply_actions(dp, actions):
         "Generate an OFPInstructionActions message with OFPIT_APPLY_ACTIONS"
 
         return dp.ofproto_parser.OFPInstructionActions(
             dp.ofproto.OFPIT_APPLY_ACTIONS, actions)
+
 
     @staticmethod
     def action_output(dp, port, max_len=None):
@@ -59,11 +61,13 @@ class AuxApp(object):
 
         return dp.ofproto_parser.OFPActionOutput(**kwargs)
 
+
     @staticmethod
     def goto_table(dp, table_id):
         "Generate an OFPInstructionGotoTable message"
 
         return dp.ofproto_parser.OFPInstructionGotoTable(table_id)
+
 
     @staticmethod
     def match(dp, in_port=None, eth_dst=None, eth_src=None, eth_type=None,
@@ -79,6 +83,7 @@ class AuxApp(object):
         if eth_type != None:
             kwargs['eth_type'] = eth_type
         return dp.ofproto_parser.OFPMatch(**kwargs)
+
 
     @staticmethod
     def barrier_request(dp):
@@ -103,6 +108,23 @@ class AuxApp(object):
                 tables.append(self.config[key])
 
         return tables
+
+
+    def groupMod(self, dp, group_id, command=None, type = None, bucket = None):
+
+        mod_kwargs = {
+            'datapath': dp,
+            'group_id': group_id,
+            'command': command or dp.ofproto.OFPGC_ADD,
+            'cookie': self.config.group_cookie
+        }
+        if type != None:
+            mod_kwargs['type'] = type
+        if bucket != None:
+            mod_kwargs['bucket'] = bucket
+
+        return dp.ofproto_parser.OFPGroupMod(**mod_kwargs)
+
 
     def flowmod(self, dp, table_id, command=None, idle_timeout=None,
                 hard_timeout=None, priority=None, buffer_id=None,
@@ -139,6 +161,7 @@ class AuxApp(object):
             mod_kwargs['instructions'] = instructions
         return dp.ofproto_parser.OFPFlowMod(**mod_kwargs)
 
+
     def flowdel(self, dp, table_id, priority=None, match=None, out_port=None):
         "Generate an OFPFlowMod through flowmod with the OFPFC_DELETE command"
 
@@ -148,6 +171,7 @@ class AuxApp(object):
                             command=dp.ofproto.OFPFC_DELETE,
                             out_port=out_port or dp.ofproto.OFPP_ANY,
                             out_group=dp.ofproto.OFPG_ANY)
+
 
     def clean_all_flows(self, dp):
         "Remove all flows with the SS2 cookie from all tables"
