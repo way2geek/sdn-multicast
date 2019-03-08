@@ -1,0 +1,20 @@
+para enviar la salida de un script
+(por ejemplo la salida de un controlador de RYU)
+ejecutar de la siguiente forma:
+
+ryu-manager simple_switch.py &> output_1.txt
+
+o tambien:
+
+ryu-manager simple_switch.py &>  /home/$USER/Desktop/output_1.txt
+                                      ^
+                                      |
+                                    Ruta
+                                    conocida
+                                    que
+                                    sepamos
+                                    que
+                                    existe
+                                    siempre.
+
+lo ulsitmo esta a prueba
