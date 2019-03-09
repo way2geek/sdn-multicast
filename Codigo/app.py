@@ -5,7 +5,7 @@ from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
 from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
-from ryu.lib.packet import ether_types
+from ryu.lib.packet import ether_types as ether
 from ryu.lib.packet import ipv4
 from ryu.lib.packet import in_proto
 from ryu.lib.igmplib import IgmpSnooper
@@ -33,7 +33,7 @@ class App(app_manager.RyuApp, AuxApp):
 
         msgs = self.add_datapath(dp, pkt)
 
-        self.send_msgs(dp, pkt)
+        self.send_msgs(dp, msgs)
 
     #EVENTO DONDE SE REGISTRA UN PAQUETE ENTRANTE
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
