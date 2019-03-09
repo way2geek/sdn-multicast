@@ -5,7 +5,7 @@ from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
-from ryu.lib.packet import ethernet, ether_types as ether, packet
+from ryu.lib.packet import ether_type_typenet, ether_type_types, packet
 from ryu.ofproto import ofproto_v1_3
 
 class SS2Core(app_manager.RyuApp, SS2App):
@@ -38,7 +38,7 @@ class SS2Core(app_manager.RyuApp, SS2App):
 
         # Parse the packet
         pkt = packet.Packet(ev.msg.data)
-        eth = pkt.get_protocols(ethernet.ethernet)[0]
+        eth = pkt.get_protocols(ether_typenet.ether_typenet)[0]
 
         # Ensure this host was not recently learned to avoid flooding the switch
         # with the learning messages if the learning was already in process.
@@ -105,7 +105,7 @@ class SS2Core(app_manager.RyuApp, SS2App):
                                  instructions=[])]
 
         # Drop LLDP
-        msgs += _drop(self.match(dp, eth_type=ether.ETH_TYPE_LLDP))
+        msgs += _drop(self.match(dp, eth_type=ether_type.ETH_TYPE_LLDP))
 
         # Drop STDP BPDU
         msgs += _drop(self.match(dp, eth_dst='01:80:c2:00:00:00'))
@@ -141,7 +141,7 @@ class SS2Core(app_manager.RyuApp, SS2App):
             ('01:80:c2:00:00:00', '01:80:c2:00:00:00'), # 802.x
             ('01:00:5e:00:00:00', 'ff:ff:ff:00:00:00'), # IPv4 multicast
             ('33:33:00:00:00:00', 'ff:ff:00:00:00:00'), # IPv6 multicast
-            ('ff:ff:ff:ff:ff:ff', None) # Ethernet broadcast
+            ('ff:ff:ff:ff:ff:ff', None) # ether_typenet broadcast
         ]
         actions = [self.action_output(dp, ofp.OFPP_FLOOD)]
         instructions = [self.apply_actions(dp, actions)]
