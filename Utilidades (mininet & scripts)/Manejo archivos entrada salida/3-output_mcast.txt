@@ -1,0 +1,8 @@
+Multicast Group Added: [225.0.0.1] querier:[1] hosts:[]
+Multicast Group Member Changed: [225.0.0.1] querier:[1] hosts:[4]
+Multicast Group Added: [225.0.0.2] querier:[1] hosts:[]
+Multicast Group Member Changed: [225.0.0.2] querier:[1] hosts:[5]
+Multicast Group Member Changed: [225.0.0.1] querier:[1] hosts:[4, 6]
+Multicast Group Member Changed: [225.0.0.1] querier:[1] hosts:[6]
+Multicast Group Removed: [225.0.0.2] querier:[1] hosts:[]
+Multicast Group Removed: [225.0.0.1] querier:[1] hosts:[]
