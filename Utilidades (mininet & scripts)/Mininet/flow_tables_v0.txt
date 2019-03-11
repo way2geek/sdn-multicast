@@ -21,3 +21,7 @@ table=0,priority=0,actions=drop
 #tabla 1:
 
 #tabla 2:
+
+
+sudo ovs-ofctl -O OpenFlow13 dump-groups s1
+sudo ovs-ofctl -O OpenFlow13 dump-flows s1
