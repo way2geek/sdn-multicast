@@ -1,0 +1,26 @@
+loading app simple_switch_igmp_13.py
+loading app ryu.controller.ofp_handler
+instantiating app None of IgmpLib
+creating context igmplib
+instantiating app simple_switch_igmp_13.py of SimpleSwitchIgmp13
+instantiating app ryu.controller.ofp_handler of OFPHandler
+[querier][INFO] started a querier.
+[snoop][INFO] SW=0000000000000002 PORT=1 IGMP received. [QUERY]
+[snoop][INFO] SW=0000000000000002 PORT=4 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=4 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=4 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=1 IGMP received. [QUERY]
+[snoop][INFO] SW=0000000000000002 PORT=5 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=4 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=5 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=5 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=6 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=6 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=6 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=1 IGMP received. [QUERY]
+[snoop][INFO] SW=0000000000000002 PORT=6 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=5 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=4 IGMP received. [REPORT]
+[snoop][INFO] SW=0000000000000002 PORT=4 IGMP received. [LEAVE]
+[snoop][INFO] SW=0000000000000002 PORT=5 IGMP received. [LEAVE]
+[snoop][INFO] SW=0000000000000002 PORT=6 IGMP received. [LEAVE]
