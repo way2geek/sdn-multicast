@@ -22,22 +22,67 @@ printDic(gruposM)
 
 print('\n')
 
-def obtenerPuertos(gruposM, direccionM, switch_id):
-    aux = []
-    for grupo, g_info in gruposM.items():
-        if direccionM == grupo:
-            #g_info = direccionM[grupo] #toma diccionarios de cada switch en el grupo multicast
-            for s_id, s_info in g_info.items():
-                if s_id == switch_id:
-                    print(s_id)
-                    for port, value in enumerate(s_info):
-                        aux.append(port+1)
-                        print('Puerto: {}, Estado: {}.'.format(port+1, value))
+grupos = {
+    12:{
+        '225.0.0.1':{
+                    'replied':True,
+                    'leave':False,
+                    'ports':{
+                            1:{
+                               'out':True,
+                               'in':False
+                              },
+                            2:{
+                               'out':False,
+                               'in':True
+                              }
+                            }
+                    }
+       },
+      13:{
+          '225.0.0.5':{
+                      'replied':True,
+                      'leave':False,
+                      'ports':{
+                              1:{
+                                 'out':True,
+                                 'in':False
+                                }
+                              }
+                      }
+         }
+}
 
-    return aux
 
-puertos1 = obtenerPuertos(gruposM, '225.0.30.2', 's1')
-puertos2 = obtenerPuertos(gruposM, '225.0.31.2', 's1')
+def getDicPorts(grupos, dst, datapath):
+    ports = {}
+    puertosOut = []
+    puertosIn = []
+    for dp, g_info in grupos.items():
+        if dp == datapath:
+            print(dp)
+            for destino, d_info in g_info.items():
+                print(destino)
+                if destino == dst:
+                    ports = d_info['ports']
+                else:
+                    print('NO SE ENCUENTRA EL GRUPO REGISTRADO')
+    return ports
 
-print(puertos1)
-print(puertos2)
+
+def puertos_IN_OUT(puertos):
+    puertosIN = []
+    puertosOUT = []
+    puertos = getDicPorts(grupos, '225.0.0.1', 12)
+    for puerto, p_info in puertos.items():
+        print(p_info)
+        if p_info['out'] == True:
+            puertosOUT.append(puerto)
+        #elif p_info['in'] ==True:
+        #    puertosIN.append(puerto)
+    print(puertosOUT)
+
+
+puertos = getDicPorts(grupos, '225.0.0.34', 12)
+
+puertos_IN_OUT(puertos)
