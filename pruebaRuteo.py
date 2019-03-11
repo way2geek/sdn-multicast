@@ -9,7 +9,7 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib.packet import ipv4
 from ryu.lib.packet import in_proto
-
+import logging
 
 PRIORITY_MAX = 1000
 PRIORITY_MID = 900
@@ -31,6 +31,7 @@ class PruebaRuteo(app_manager.RyuApp):
 
     def __init__(self, *args, **kwargs):
         super(PruebaRuteo, self).__init__(*args, **kwargs)
+        self.groups =
 
 
     #se instalan las flow tables y group tables en los witches al conocerlos
@@ -50,16 +51,13 @@ class PruebaRuteo(app_manager.RyuApp):
         "Handle incoming packets from a datapath"
         #msgs = []
         dp = ev.msg.datapath
+        dpid = dp.id
         in_port = ev.msg.match['in_port']
 
         # Parse the packet
         pkt = packet.Packet(ev.msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
 
-        # Ensure this host was not recently learned to avoid flooding the switch
-        # with the learning messages if the learning was already in process.
-        #if not self.host_cache.is_new_host(dp.id, in_port, eth.src):
-        #    return
 
         msgs = self.learn_source(
             dp=dp,
@@ -134,20 +132,18 @@ class PruebaRuteo(app_manager.RyuApp):
                               instructions=instructions)]
 
         ###TABLE_DST ###
-        flood_addrs = [
-            ('01:80:c2:00:00:00', '01:80:c2:00:00:00'), # 802.x
-            ('01:00:5e:00:00:00', 'ff:ff:ff:00:00:00'), # IPv4 multicast
-            ('33:33:00:00:00:00', 'ff:ff:00:00:00:00'), # IPv6 multicast
-            ('ff:ff:ff:ff:ff:ff', None) # ethernet broadcast
-        ]
-        actions = [self.action_output(dp, ofp.OFPP_FLOOD)]
-        instructions = [self.apply_actions(dp, actions)]
-        for eth_dst in flood_addrs:
-            match = self.match(dp, eth_dst=eth_dst)
+        "ENVIO TRAFICO MULTICAST A GROUP TABLE"
+        eth = packet.get_protocols(ethernet.ethernet)[0]
+        if self.esMulticast(eth.dst):
+            msgs += [self.groupMod(dp,GROUP_TABLE_1)]
+            actions = [self.action_output(dp, ofp.OFPP_CONTROLLER, max_len=256),
+                       parser.OFPActionGroup(group_id=GROUP_TABLE_1)]
+            match = self.match(dp)
+            instructions = [self.apply_actions(dp, actions)]
             msgs += [self.flowmod(dp, TABLE_DST,
-                                  match=match,
-                                  priority=PRIORITY_MAX,
-                                  instructions=instructions)]
+                                  match = match,
+                                  priority = PRIORITY_MAX,
+                                  instructions = instructions)]
 
         # Table-miss floods
         match = self.match(dp)
@@ -172,6 +168,7 @@ class PruebaRuteo(app_manager.RyuApp):
                              instructions=instructions,
                              priority=PRIORITY_MID)]
 
+
     def add_eth_dst_flow(self, dp, out_port, eth_dst):
         "Add flow to forward packet sent to eth_dst to out_port"
 
@@ -185,6 +182,21 @@ class PruebaRuteo(app_manager.RyuApp):
                              priority=PRIORITY_MID)]
 
 
+    def send_group_mode(self, dp):
+
+        ofproto = dp.ofproto
+        buckets = []
+        ports = []
+        ports = self.getGroupPorts(dp)
+        bucket = self.setActionsBuckets(dp, ports)
+        buckets.append(bucket)
+
+        return [self.groupMod(dp, GROUP_TABLE_1,
+                              type = ofproto.OFPGT_ALL,
+                              buckets = buckets)]
+
+    """SE DEBERIA MANDARLE COMO PARAMETRO EL DESTINO PARA VERIFICAR SI ES MULTICAST
+       Y REALIZAR EL LLAMADA A LA FUNCION send_group_mode"""
     def learn_source(self, dp, port, eth_src):
         "Learn the port associated with the source MAC"
         #msgs = []
@@ -237,6 +249,30 @@ class PruebaRuteo(app_manager.RyuApp):
 
         return dp.ofproto_parser.OFPInstructionActions(
             dp.ofproto.OFPIT_APPLY_ACTIONS, actions)
+
+
+    def setActionsBuckets(self, dp, ports):
+        pass
+
+
+    def getGroupPorts(self, dp):
+        pass
+
+
+    def groupMod(self, dp, group_id, command=None, type = None, buckets = None):
+
+        mod_kwargs = {
+            'datapath': dp,
+            'group_id': group_id,
+            'command': command or dp.ofproto.OFPGC_ADD,
+            #'cookie': self.config.group_cookie
+        }
+        if type != None:
+            mod_kwargs['type'] = type
+        if buckets != None:
+            mod_kwargs['buckets'] = buckets
+
+        return dp.ofproto_parser.OFPGroupMod(**mod_kwargs)
 
 
     def flowmod(self, dp, table_id, command=None, idle_timeout=None,
@@ -328,7 +364,7 @@ class PruebaRuteo(app_manager.RyuApp):
         flowmods after this request. For example, make sure the flowmods that
         delete any old flows for a host complete before adding the new flows.
         Otherwise there is a chance that the delete operation could occur after
-        the new flows are added in a multi-threaded datapath.
-        """
+        the new flows are added in a multi-threaded datapath."""
+
 
         return dp.ofproto_parser.OFPBarrierRequest(datapath=dp)
