@@ -1,16 +1,4 @@
 
-gruposM = {
-    '225.0.30.2':
-                {'s1':[True, False, True],
-                 's2':[False, True, True]
-    },
-    '225.0.31.2':
-                {'s1':[True, True, False],
-                 's2':[False, False, True]
-
-    }
-}
-
 def printDic(diccionario):
     for grupo, g_info in diccionario.items():
         print("\nGrupo Multicast:", grupo)
