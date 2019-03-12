@@ -15,13 +15,17 @@ grupos = {
                     'replied':True,
                     'leave':False,
                     'ports':{
-                            1:{
+                            3:{
                                'out':True,
                                'in':False
                               },
                             2:{
                                'out':False,
                                'in':True
+                               },
+                            1:{
+                               'out':True,
+                               'in':False
                               }
                             }
                     }
@@ -69,7 +73,7 @@ class PruebaGroupTable(app_manager.RyuApp):
         "Handle new datapaths attaching to Ryu"
         dp = ev.msg.datapath
         ofp = dp.ofproto
-        pkt = packet.Packet(ev.msg.data)
+        #pkt = packet.Packet(ev.msg.data)
 
         msgs = self.add_datapath(dp)
 
@@ -88,10 +92,12 @@ class PruebaGroupTable(app_manager.RyuApp):
         pkt = packet.Packet(ev.msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
 
+        destino = dst.eth
         "ENVIO TRAFICO MULTICAST A GROUP TABLE"
 
         if self.esMulticast(destino):
-            msgs += [self.groupMod(dp,GROUP_TABLE_1)]
+            print('HAY TRAFICO MULTICAST EN LA RED')
+            msgs += [self.send_group_mode(dp,destino)]
             actions = [self.action_output(dp, ofp.OFPP_CONTROLLER, max_len=256),
                        parser.OFPActionGroup(group_id=GROUP_TABLE_1)]
             match = self.match(dp)
@@ -100,7 +106,6 @@ class PruebaGroupTable(app_manager.RyuApp):
                                   match = match,
                                   priority = PRIORITY_MAX,
                                   instructions = instructions)]
-
 
     #    msgs = self.learn_source(
     #        dp=dp,
@@ -144,134 +149,171 @@ class PruebaGroupTable(app_manager.RyuApp):
         # Drop Broadcast Sources
         msgs += self.dropPackage(dp, self.match(dp, eth_src='ff:ff:ff:ff:ff:ff'))
 
+        return msgs
 
-        def send_group_mode(self, dp):
-            global grupos
-            ofproto = dp.ofproto
-            buckets = []
-            ports = []
-            ports = self.getGroupPorts(dp, grupos)
-            bucket = self.setActionsBuckets(dp, ports)
-            buckets.append(bucket)
 
-            return [self.groupMod(dp, GROUP_TABLE_1,
-                                  type = ofproto.OFPGT_ALL,
-                                  buckets = buckets)]
+    def send_group_mode(self, dp, dst):
+
+        global grupos
+        ofproto = dp.ofproto
+        buckets = []
+        ports = []
+
+        ports = self.getGroupPorts(grupos, dst, dp)
+        bucket = self.setActionsBuckets(dp, ports)
+        buckets.append(bucket)
+
+        return [self.groupMod(dp, GROUP_TABLE_1,
+                              type = ofproto.OFPGT_ALL,
+                              buckets = buckets)]
 
 
     #-----------------------------------------------------------------------------#
-        """FUNCIONES AUXILIARES"""
+    """FUNCIONES AUXILIARES"""
 
-        def send_msgs(self, dp, msgs):
-            "Send all the messages provided to the datapath"
-            for msg in msgs:
-                dp.send_msg(msg)
-
-
-        def goto_table(self, dp, table_id):
-            "Generate an OFPInstructionGotoTable message"
-
-            return dp.ofproto_parser.OFPInstructionGotoTable(table_id)
+    def send_msgs(self, dp, msgs):
+        "Send all the messages provided to the datapath"
+        for msg in msgs:
+            dp.send_msg(msg)
 
 
-        def action_output(self, dp, port, max_len=None):
-            "Generate an OFPActionOutput message"
+    def goto_table(self, dp, table_id):
+        "Generate an OFPInstructionGotoTable message"
 
-            kwargs = {'port': port}
-            if max_len != None:
-                kwargs['max_len'] = max_len
-
-            return dp.ofproto_parser.OFPActionOutput(**kwargs)
+        return dp.ofproto_parser.OFPInstructionGotoTable(table_id)
 
 
-        def apply_actions(self, dp, actions):
-            "Generate an OFPInstructionActions message with OFPIT_APPLY_ACTIONS"
+    def action_output(self, dp, port, max_len=None):
+        "Generate an OFPActionOutput message"
 
-            return dp.ofproto_parser.OFPInstructionActions(
-                dp.ofproto.OFPIT_APPLY_ACTIONS, actions)
+        kwargs = {'port': port}
+        if max_len != None:
+            kwargs['max_len'] = max_len
 
-
-        def setActionsBuckets(self, dp, ports, grupos):
-            pass
-
-
-        def getGroupPorts(self, dp):
-            pass
+        return dp.ofproto_parser.OFPActionOutput(**kwargs)
 
 
-        def groupMod(self, dp, group_id, command=None, type = None, buckets = None):
+    def apply_actions(self, dp, actions):
+        "Generate an OFPInstructionActions message with OFPIT_APPLY_ACTIONS"
 
-            mod_kwargs = {
-                'datapath': dp,
-                'group_id': group_id,
-                'command': command or dp.ofproto.OFPGC_ADD,
-                'cookie': 0x55200001
-            }
-            if type != None:
-                mod_kwargs['type'] = type
-            if buckets != None:
-                mod_kwargs['buckets'] = buckets
-
-            return dp.ofproto_parser.OFPGroupMod(**mod_kwargs)
+        return dp.ofproto_parser.OFPInstructionActions(
+            dp.ofproto.OFPIT_APPLY_ACTIONS, actions)
 
 
-        def flowmod(self, dp, table_id, command=None, idle_timeout=None,
-                    hard_timeout=None, priority=None, buffer_id=None,
-                    out_port=None, out_group=None, flags=None, match=None,
-                    instructions=None):
-            "Generate an OFPFlowMod message with the cookie already specified"
+    def setActionsBuckets(self, dp, ports):
+        actions = []
 
-            mod_kwargs = {
-                'datapath': dp,
-                'table_id': table_id,
-                'command': command or dp.ofproto.OFPFC_ADD,
-                'cookie': 0x55200000
-            }
-            # Selectively add kwargs so ofproto defaults will be used otherwise.
-            # Not using **kwargs in method defintion so arguments can be easy to
-            # parse for static analysis (autocompletion)
-            if idle_timeout != None:
-                mod_kwargs['idle_timeout'] = idle_timeout
-            if hard_timeout != None:
-                mod_kwargs['hard_timeout'] = hard_timeout
-            if priority != None:
-                mod_kwargs['priority'] = priority
-            if buffer_id != None:
-                mod_kwargs['buffer_id'] = buffer_id
-            if out_port != None:
-                mod_kwargs['out_port'] = out_port
-            if out_group != None:
-                mod_kwargs['out_group'] = out_group
-            if flags != None:
-                mod_kwargs['flags'] = flags
-            if match != None:
-                mod_kwargs['match'] = match
-            if instructions != None:
-                mod_kwargs['instructions'] = instructions
-            return dp.ofproto_parser.OFPFlowMod(**mod_kwargs)
+        for port in ports:
+            actions.append(parser.OFPActionOutput(port))
+
+        return actions
 
 
-        def match(self, dp, in_port=None, eth_dst=None, eth_src=None, eth_type=None,
-                      ipv4_dst = None, **kwargs):
-            "Generate an OFPMatch message"
-
-            if in_port != None:
-                kwargs['in_port'] = in_port
-            if eth_dst != None:
-                kwargs['eth_dst'] = eth_dst
-            if eth_src != None:
-                kwargs['eth_src'] = eth_src
-            if eth_type != None:
-                kwargs['eth_type'] = eth_type
-            if ipv4_dst != None:
-                kwargs['ipv4_dst'] = ipv4_dst
-            return dp.ofproto_parser.OFPMatch(**kwargs)
+    def esMulticast(dst):
+        return (dst[0:2] == '01' or dst[0:5] == '33:33' or dst == 'ff:ff:ff:ff:ff:ff')
 
 
-        def dropPackage(self, dp, match):
-            global TABLE_FILTER
-            global PRIORITY_MAX
+    def getDicPorts(self, grupos, dst, datapath):
+        ports = {}
+        puertosOut = []
+        puertosIn = []
+        for dp, g_info in grupos.items():
+            if dp == datapath:
+                print(dp)
+                for destino, d_info in g_info.items():
+                    print(destino)
+                    if destino == dst:
+                        ports = d_info['ports']
+                    else:
+                        print('NO SE ENCUENTRA EL GRUPO REGISTRADO')
+        return ports
 
-            return [self.flowmod(dp, TABLE_FILTER,
-                                 match=match, priority=PRIORITY_MAX,
-                                 instructions=[])]
+
+    def getGroupPorts(self, grupos, dst, dp):
+        puertosIN = []
+        puertosOUT = []
+        puertos = self.getDicPorts(grupos, dst, dp)
+        for puerto, p_info in puertos.items():
+            print(p_info)
+            if p_info['out'] == True:
+                puertosOUT.append(puerto)
+            #elif p_info['in'] ==True:
+            #    puertosIN.append(puerto)
+        return puertosOUT
+
+
+    def groupMod(self, dp, group_id, command=None, type = None, buckets = None):
+
+        mod_kwargs = {
+            'datapath': dp,
+            'group_id': group_id,
+            'command': command or dp.ofproto.OFPGC_ADD,
+            'cookie': 0x55200001
+        }
+        if type != None:
+            mod_kwargs['type'] = type
+        if buckets != None:
+            mod_kwargs['buckets'] = buckets
+
+        return dp.ofproto_parser.OFPGroupMod(**mod_kwargs)
+
+
+    def flowmod(self, dp, table_id, command=None, idle_timeout=None,
+                hard_timeout=None, priority=None, buffer_id=None,
+                out_port=None, out_group=None, flags=None, match=None,
+                instructions=None):
+        "Generate an OFPFlowMod message with the cookie already specified"
+
+        mod_kwargs = {
+            'datapath': dp,
+            'table_id': table_id,
+            'command': command or dp.ofproto.OFPFC_ADD,
+            'cookie': 0x55200000
+        }
+        # Selectively add kwargs so ofproto defaults will be used otherwise.
+        # Not using **kwargs in method defintion so arguments can be easy to
+        # parse for static analysis (autocompletion)
+        if idle_timeout != None:
+            mod_kwargs['idle_timeout'] = idle_timeout
+        if hard_timeout != None:
+            mod_kwargs['hard_timeout'] = hard_timeout
+        if priority != None:
+            mod_kwargs['priority'] = priority
+        if buffer_id != None:
+            mod_kwargs['buffer_id'] = buffer_id
+        if out_port != None:
+            mod_kwargs['out_port'] = out_port
+        if out_group != None:
+            mod_kwargs['out_group'] = out_group
+        if flags != None:
+            mod_kwargs['flags'] = flags
+        if match != None:
+            mod_kwargs['match'] = match
+        if instructions != None:
+            mod_kwargs['instructions'] = instructions
+        return dp.ofproto_parser.OFPFlowMod(**mod_kwargs)
+
+
+    def match(self, dp, in_port=None, eth_dst=None, eth_src=None, eth_type=None,
+                  ipv4_dst = None, **kwargs):
+        "Generate an OFPMatch message"
+        if in_port != None:
+            kwargs['in_port'] = in_port
+        if eth_dst != None:
+            kwargs['eth_dst'] = eth_dst
+        if eth_src != None:
+            kwargs['eth_src'] = eth_src
+        if eth_type != None:
+            kwargs['eth_type'] = eth_type
+        if ipv4_dst != None:
+            kwargs['ipv4_dst'] = ipv4_dst
+        return dp.ofproto_parser.OFPMatch(**kwargs)
+
+
+    def dropPackage(self, dp, match):
+        global TABLE_FILTER
+        global PRIORITY_MAX
+
+        return [self.flowmod(dp, TABLE_FILTER,
+                             match=match, priority=PRIORITY_MAX,
+                             instructions=[])]
