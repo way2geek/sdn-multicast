@@ -60,12 +60,11 @@ class SimpleSwitch13(app_manager.RyuApp):
             match = parser.OFPMatch(in_port=3)
             self.add_flow(datapath, 10, match, actions)
 
-        if datapath.id == 2:
+        if datapath.id ==2:
             self.send_group_mod(datapath)
-            actions = [parser.OFPActionGroup(group_id=50)]
-            match = parser.OFPMatch(in_port=3)
+            actions = [parser.OFPActionGroup(group_id=52)]
+            match = parser.OFPMatch(in_port=1)
             self.add_flow(datapath, 10, match, actions)
-
 
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
         ofproto = datapath.ofproto
@@ -143,33 +142,32 @@ class SimpleSwitch13(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
-        if datapath == 1:
-            # Hardcoding the stuff, as we already know the topology diagram.
-            # Group table1
-            # Receiver port2, forward it to port1 and Port3
-            actions1 = [parser.OFPActionOutput(1)]
-            actions2 = [parser.OFPActionOutput(3)]
-            buckets = [parser.OFPBucket(actions=actions1),
-                       parser.OFPBucket(actions=actions2)]
-            req = parser.OFPGroupMod(datapath, ofproto.OFPGC_ADD,
-                                     ofproto.OFPGT_ALL, 50, buckets)
-            datapath.send_msg(req)
+        # Hardcoding the stuff, as we already know the topology diagram.
+        # Group table1
+        # Receiver port2, forward it to port1 and Port3
 
-            # Group table2
-            # Receive Port3, forward it to port1 and Port2
-            actions1 = [parser.OFPActionOutput(1)]
-            actions2 = [parser.OFPActionOutput(2)]
-            buckets = [parser.OFPBucket(actions=actions1),
-                       parser.OFPBucket(actions=actions2)]
-            req = parser.OFPGroupMod(datapath, ofproto.OFPGC_ADD,
-                                     ofproto.OFPGT_ALL, 51, buckets)
-            datapath.send_msg(req)
+        actions1 = [parser.OFPActionOutput(1)]
+        actions2 = [parser.OFPActionOutput(3)]
+        buckets = [parser.OFPBucket(actions=actions1),
+                   parser.OFPBucket(actions=actions2)]
+        req = parser.OFPGroupMod(datapath, ofproto.OFPGC_ADD,
+                                 ofproto.OFPGT_ALL, 50, buckets)
+        datapath.send_msg(req)
 
-        if datapath == 2:
-            # Group table3
-            # Receive Port1, forward it to port3
-            actions1 = [parser.OFPActionOutput(3)]
-            buckets = [parser.OFPBucket(actions=actions1)]
-            req = parser.OFPGroupMod(datapath, ofproto.OFPGC_ADD,
-                                     ofproto.OFPGT_ALL, 50, buckets)
-            datapath.send_msg(req)
+        # Group table2
+        # Receive Port3, forward it to port1 and Port2
+        actions1 = [parser.OFPActionOutput(1)]
+        actions2 = [parser.OFPActionOutput(2)]
+        buckets = [parser.OFPBucket(actions=actions1),
+                   parser.OFPBucket(actions=actions2)]
+        req = parser.OFPGroupMod(datapath, ofproto.OFPGC_ADD,
+                                 ofproto.OFPGT_ALL, 51, buckets)
+        datapath.send_msg(req)
+
+        #grupo 3
+        action1 = [parser.OFPActionOutput(3)]
+        action2 = [parser.OFPActionOutput(2)]
+        buckets=[parser.OFPBucket(actions=action1),
+                 (parser.OFPBucket(actions=action2)]
+        req = parser.OFPGroupMod(datapath, ofproto.OFPGC_ADD, ofproto.OFPGT_ALL, 52, buckets)
+        datapath.send_msg(req)
