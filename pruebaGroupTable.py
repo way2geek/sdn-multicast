@@ -19,10 +19,6 @@ grupos = {
                                'out':True,
                                'in':False
                               },
-                            2:{
-                               'out':False,
-                               'in':True
-                               },
                             1:{
                                'out':True,
                                'in':False
@@ -30,7 +26,7 @@ grupos = {
                             }
                     }
        },
-      1:{
+      2:{
           '225.0.0.5':{
                       'replied':True,
                       'leave':False,
@@ -67,7 +63,6 @@ class PruebaGroupTable(app_manager.RyuApp):
         super(PruebaGroupTable, self).__init__(*args, **kwargs)
 
 
-
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
         "Handle new datapaths attaching to Ryu"
@@ -87,32 +82,22 @@ class PruebaGroupTable(app_manager.RyuApp):
         dp = ev.msg.datapath
         dpid = dp.id
         in_port = ev.msg.match['in_port']
+        ofp = dp.ofproto
 
         # Parse the packet
         pkt = packet.Packet(ev.msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
-
-        destino = dst.eth
+        destino = eth.dst
+        print(destino)
         "ENVIO TRAFICO MULTICAST A GROUP TABLE"
-
         if self.esMulticast(destino):
             print('HAY TRAFICO MULTICAST EN LA RED')
-            msgs += [self.send_group_mode(dp,destino)]
-            actions = [self.action_output(dp, ofp.OFPP_CONTROLLER, max_len=256),
-                       parser.OFPActionGroup(group_id=GROUP_TABLE_1)]
-            match = self.match(dp)
-            instructions = [self.apply_actions(dp, actions)]
-            msgs += [self.flowmod(dp, TABLE_FILTER,
-                                  match = match,
-                                  priority = PRIORITY_MAX,
-                                  instructions = instructions)]
+            self.manejoMulticast(dp, destino)
 
     #    msgs = self.learn_source(
     #        dp=dp,
     #        port=in_port,
     #        eth_src=eth.src)
-
-        self.send_msgs(dp, msgs)
 
 
     def add_datapath(self, dp):
@@ -125,7 +110,7 @@ class PruebaGroupTable(app_manager.RyuApp):
 
     def add_default_flows(self, dp):
         msgs = []
-
+        ofp = dp.ofproto
 
         ### TABLE_ACL ###
         # Add a low priority table-miss flow to forward to the switch table.
@@ -137,7 +122,6 @@ class PruebaGroupTable(app_manager.RyuApp):
                               instructions=instructions)]
 
         ### TABLE_FILTER ###
-        #msgs += self.dropPackage(dp, self.match(dp, ipv4_dst = '192.168.1.13'))
 
         # Drop LLDP
         msgs += self.dropPackage(dp, self.match(dp, eth_type=ether_types.ETH_TYPE_LLDP))
@@ -146,26 +130,61 @@ class PruebaGroupTable(app_manager.RyuApp):
         msgs += self.dropPackage(dp, self.match(dp, eth_dst='01:80:c2:00:00:00'))
         msgs += self.dropPackage(dp, self.match(dp, eth_dst='01:00:0c:cc:cc:cd'))
 
+        #drop paquete igmp
+        #msgs += self.dropPackage(dp, self.match(dp, eth_dst='01:00:5e:00:00:16'))
+
         # Drop Broadcast Sources
         msgs += self.dropPackage(dp, self.match(dp, eth_src='ff:ff:ff:ff:ff:ff'))
 
+        #msgs += self.dropPackage(dp, self.match(dp, eth_dst ='ff:ff:ff:ff:ff:ff'))
+
+        msgs += self.dropPackage(dp, self.match(dp, eth_type=ether_types.ETH_TYPE_IPV6))
+
+        #EL RESTO DE LOS PAQUETES SON ENVIADOS AL CONTROLADOR
+        match = self.match(dp)
+        actions = [self.action_output(dp, ofp.OFPP_CONTROLLER, max_len=256)]
+        instructions = [self.goto_table(dp, TABLE_FILTER)]
+        msgs += [self.flowmod(dp,
+                              TABLE_FILTER,
+                              match=match,
+                              priority=PRIORITY_LOW,
+                              instructions=instructions)]
         return msgs
 
 
     def send_group_mode(self, dp, dst):
 
-        global grupos
-        ofproto = dp.ofproto
+        #msgs = []
+        ofp = dp.ofproto
+        ofp_parser = dp.ofproto_parser
         buckets = []
         ports = []
-
-        ports = self.getGroupPorts(grupos, dst, dp)
+        dpid = dp.id
+        ports = self.getGroupPorts(dst, dpid)
+        print(ports)
         bucket = self.setActionsBuckets(dp, ports)
         buckets.append(bucket)
+        print(buckets)
 
-        return [self.groupMod(dp, GROUP_TABLE_1,
-                              type = ofproto.OFPGT_ALL,
-                              buckets = buckets)]
+        msg = [ofp_parser.OFPGroupMod(dp, ofp.OFPGC_ADD,
+                              ofp.OFPGT_ALL, GROUP_TABLE_1, buckets)]
+        dp.send_msg(msg)
+
+
+    def manejoMulticast(self, dp, destino):
+        ofp = dp.ofproto
+        ofp_parser = dp.ofproto_parser
+        msgs = []
+
+        self.send_group_mode(dp,destino)
+        actions = [ofp_parser.OFPActionGroup(GROUP_TABLE_1)]
+        match = self.match(dp)
+        instructions = [self.apply_actions(dp, actions)]
+        msgs += [self.flowmod(dp, TABLE_FILTER,
+                              match = match,
+                              priority = PRIORITY_MAX,
+                              instructions = instructions)]
+        self.send_msgs(dp, msgs)
 
 
     #-----------------------------------------------------------------------------#
@@ -204,37 +223,41 @@ class PruebaGroupTable(app_manager.RyuApp):
         actions = []
 
         for port in ports:
-            actions.append(parser.OFPActionOutput(port))
+            actions.append(dp.ofproto.parser.OFPActionOutput(port))
 
         return actions
 
 
-    def esMulticast(dst):
-        return (dst[0:2] == '01' or dst[0:5] == '33:33' or dst == 'ff:ff:ff:ff:ff:ff')
+    def esMulticast(self, dst):
+        return (dst[0:2] == '01' or dst[0:5] == '33:33')
 
 
-    def getDicPorts(self, grupos, dst, datapath):
+    def getDicPorts(self, dst, datapath):
+        global grupos
         ports = {}
         puertosOut = []
         puertosIn = []
+
         for dp, g_info in grupos.items():
             if dp == datapath:
                 print(dp)
                 for destino, d_info in g_info.items():
                     print(destino)
                     if destino == dst:
+                        print('holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
                         ports = d_info['ports']
                     else:
                         print('NO SE ENCUENTRA EL GRUPO REGISTRADO')
         return ports
 
 
-    def getGroupPorts(self, grupos, dst, dp):
+    def getGroupPorts(self, dst, dp):
+        global grupos
         puertosIN = []
         puertosOUT = []
-        puertos = self.getDicPorts(grupos, dst, dp)
+        puertos = self.getDicPorts(dst, dp)
+        print(puertos)
         for puerto, p_info in puertos.items():
-            print(p_info)
             if p_info['out'] == True:
                 puertosOUT.append(puerto)
             #elif p_info['in'] ==True:
@@ -242,16 +265,15 @@ class PruebaGroupTable(app_manager.RyuApp):
         return puertosOUT
 
 
-    def groupMod(self, dp, group_id, command=None, type = None, buckets = None):
+    def groupMod(self, dp, group_id, command=None, type_ = None, buckets = None):
 
         mod_kwargs = {
             'datapath': dp,
-            'group_id': group_id,
             'command': command or dp.ofproto.OFPGC_ADD,
-            'cookie': 0x55200001
-        }
+            'group_id': group_id,
+            }
         if type != None:
-            mod_kwargs['type'] = type
+            mod_kwargs['type_'] = type_
         if buckets != None:
             mod_kwargs['buckets'] = buckets
 
@@ -269,7 +291,7 @@ class PruebaGroupTable(app_manager.RyuApp):
             'table_id': table_id,
             'command': command or dp.ofproto.OFPFC_ADD,
             'cookie': 0x55200000
-        }
+            }
         # Selectively add kwargs so ofproto defaults will be used otherwise.
         # Not using **kwargs in method defintion so arguments can be easy to
         # parse for static analysis (autocompletion)

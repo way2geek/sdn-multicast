@@ -31,7 +31,7 @@ class PruebaRuteo(app_manager.RyuApp):
 
     def __init__(self, *args, **kwargs):
         super(PruebaRuteo, self).__init__(*args, **kwargs)
-        self.groups = {}
+        #self.groups =
 
 
     #se instalan las flow tables y group tables en los witches al conocerlos
@@ -40,9 +40,8 @@ class PruebaRuteo(app_manager.RyuApp):
         "Handle new datapaths attaching to Ryu"
         dp = ev.msg.datapath
         ofp = dp.ofproto
-        pkt = packet.Packet(ev.msg.data)
 
-        msgs = self.add_datapath(dp, pkt)
+        msgs = self.add_datapath(dp)
 
         self.send_msgs(dp, msgs)
 
@@ -68,13 +67,13 @@ class PruebaRuteo(app_manager.RyuApp):
         self.send_msgs(dp, msgs)
 
 
-    def add_datapath(self, dp, packet):
+    def add_datapath(self, dp):
         #msgs = []
         msgs = self.clean_all_flows(dp)
-        msgs += self.add_default_flows(dp, packet)
+        msgs += self.add_default_flows(dp)
         return msgs
 
-    def add_default_flows(self, dp, packet):
+    def add_default_flows(self, dp):
         global TABLE_ACL
         global TABLE_FILTER
         global TABLE_SRC

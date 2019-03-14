@@ -20,7 +20,7 @@ class Topologia(Topo):
         h1 = self.addHost('h1', mac="00:00:00:00:11:11", ip="192.168.1.11/24")
         h2 = self.addHost('h2', mac="00:00:00:00:11:12", ip="192.168.1.12/24")
         h3 = self.addHost('h3', mac="00:00:00:00:11:13", ip="192.168.1.13/24")
-        #h4 = self.addHost('h4', mac="00:00:00:00:11:14", ip="192.168.1.14/24")
+        h4 = self.addHost('h4', mac="00:00:00:00:11:14", ip="192.168.1.14/24")
         #h5 = self.addHost('h5', mac="00:00:00:00:11:15", ip="192.168.1.15/24")
         #h6 = self.addHost('h6', mac="00:00:00:00:11:16", ip="192.168.1.16/24")
 
@@ -29,7 +29,7 @@ class Topologia(Topo):
         self.addLink(h1, s1, 1, 1)
         self.addLink(h2, s1, 1, 2)
         self.addLink(h3, s1, 1, 3)
-        #self.addLink(h4, s2)
+        self.addLink(h4, s1, 1, 4)
         #self.addLink(h5, s2)
         #self.addLink(h6, s2)
 

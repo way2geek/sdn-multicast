@@ -1,12 +1,12 @@
 
-def printDic(diccionario):
-    for grupo, g_info in diccionario.items():
-        print("\nGrupo Multicast:", grupo)
+#def printDic(diccionario):
+#    for grupo, g_info in diccionario.items():
+#        print("\nGrupo Multicast:", grupo)
 
-        for key in g_info:
-            print(key + ':', g_info[key])
+#        for key in g_info:
+#            print(key + ':', g_info[key])
 
-printDic(gruposM)
+#printDic(gruposM)
 
 print('\n')
 
@@ -16,13 +16,17 @@ grupos = {
                     'replied':True,
                     'leave':False,
                     'ports':{
-                            1:{
+                            3:{
                                'out':True,
                                'in':False
                               },
                             2:{
                                'out':False,
                                'in':True
+                               },
+                            1:{
+                               'out':True,
+                               'in':False
                               }
                             }
                     }
@@ -58,7 +62,7 @@ def getDicPorts(grupos, dst, datapath):
     return ports
 
 
-def puertos_IN_OUT(puertos):
+def puertos_IN_OUT(grupos):
     puertosIN = []
     puertosOUT = []
     puertos = getDicPorts(grupos, '225.0.0.1', 12)
@@ -71,6 +75,6 @@ def puertos_IN_OUT(puertos):
     print(puertosOUT)
 
 
-puertos = getDicPorts(grupos, '225.0.0.34', 12)
+#puertos = getDicPorts(grupos, '225.0.0.34', 12)
 
-puertos_IN_OUT(puertos)
+puertos_IN_OUT(grupos)
