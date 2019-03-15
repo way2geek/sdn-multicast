@@ -47,6 +47,18 @@ class Choto(app_manager.RyuApp):
          #self.add_flow(datapath, 10, match, actions)
 
         msgs = self.add_default_flows(datapath)
+
+        if dp.id == 1:
+            # add group tables
+            self.manage_Multicast(dp)
+            actions = [parser.OFPActionGroup(group_id=50)]
+            instructions = [self.apply_actions(dp, actions)]
+            match = parser.OFPMatch(in_port=2)
+            msgs += [self.flowmod(dp, TABLE_ACL,
+                                   match=match,
+                                   priority=PRIORITY_LOW,
+                                   instructions=instructions)]
+
         self.send_msgs(datapath, msgs)
 
 
@@ -126,18 +138,6 @@ class Choto(app_manager.RyuApp):
         parser = dp.ofproto_parser
 
 
-        if dp.id == 1:
-            # add group tables
-            self.manage_Multicast(dp)
-            actions = [parser.OFPActionGroup(group_id=50)]
-            instructions = [self.apply_actions(dp, actions)]
-            match = parser.OFPMatch(in_port=2)
-            msgs += [self.flowmod(dp, TABLE_ACL,
-                                   match=match,
-                                   priority=PRIORITY_LOW,
-                                   instructions=instructions)]
-
-
         ### TABLE_ACL ###
         # Add a low priority table-miss flow to forward to the switch table.
         # Other modules can add higher priority flows as needed.
@@ -168,7 +168,7 @@ class Choto(app_manager.RyuApp):
 
         #VOY A MAC TABLE
         match = self.match(dp)
-        actions = [self.action_output(dp, ofp.OFPP_CONTROLLER, max_len=256)]
+        #actions = [self.action_output(dp, ofp.OFPP_CONTROLLER, max_len=256)]
         instructions = [self.apply_actions(dp, actions),
                         self.goto_table(dp, TABLE_MAC)]
         msgs += [self.flowmod(dp,
@@ -179,12 +179,13 @@ class Choto(app_manager.RyuApp):
 
 
         #TABLE_MAC
-        actions = [self.action_output(dp, ofp.OFPP_FLOOD)]
+        #actions = [self.action_output(dp, ofp.OFPP_FLOOD)]
+        actions = [self.action_output(dp, ofp.OFPP_CONTROLLER, max_len=256)]
         instructions = [self.apply_actions(dp, actions)]
         msgs += [self.flowmod(dp,
                               TABLE_MAC,
                               match=match,
-                              priority=PRIORITY_MIN,
+                              priority=PRIORITY_MAX,
                               instructions=instructions)]
 
         return msgs
@@ -221,8 +222,9 @@ class Choto(app_manager.RyuApp):
                    parser.OFPBucket(actions=actions2),
                    parser.OFPBucket(actions=actions3)]
 
-        req = parser.OFPGroupMod(datapath, ofproto.OFPGC_ADD,
-                                 ofproto.OFPGT_ALL, 50, buckets)
+        req = [self.groupMod(dp, 50,
+                             type_ = ofproto.OFPGT_ALL,
+                             buckets=buckets)]
         datapath.send_msg(req)
 
 
@@ -257,6 +259,21 @@ class Choto(app_manager.RyuApp):
         if ipv4_dst != None:
             kwargs['ipv4_dst'] = ipv4_dst
         return dp.ofproto_parser.OFPMatch(**kwargs)
+
+
+    def groupMod(self, dp, group_id, command=None, type_ = None, buckets = None):
+
+        mod_kwargs = {
+            'datapath': dp,
+            'command': command or dp.ofproto.OFPGC_ADD,
+            'group_id': group_id,
+            }
+        if type != None:
+            mod_kwargs['type_'] = type_
+        if buckets != None:
+            mod_kwargs['buckets'] = buckets
+
+        return dp.ofproto_parser.OFPGroupMod(**mod_kwargs)
 
 
     def flowmod(self, dp, table_id, command=None, idle_timeout=None,
@@ -302,7 +319,3 @@ class Choto(app_manager.RyuApp):
         return [self.flowmod(dp, TABLE_FILTER,
                              match=match, priority=PRIORITY_MAX,
                              instructions=[])]
-
-
-    def add_group_mode():
-        pass
