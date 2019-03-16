@@ -45,17 +45,17 @@ class Capa2(app_manager.RyuApp):
         self.ip_to_port = {}
         self.gruposM = {
             1:{
-                '225.0.0.1':{
+              '225.0.0.1':{
                             'replied':True,
                             'leave':False,
                             'ports':{
                                     3:{
-                                       'out':True,
-                                       'in':False
+                                       'out':False,
+                                       'in':True
                                       },
                                     1:{
-                                       'out':True,
-                                       'in':False
+                                       'out':False,
+                                       'in':True
                                       }
                                     }
                             }
@@ -113,16 +113,16 @@ class Capa2(app_manager.RyuApp):
 
 
         if self.esMulticast(destino):
-            #self.multicast_tree.setdefault(destino, {})
+            print('HAY TRAFICO MULTICAST')
             if eth.ethertype == ether_types.ETH_TYPE_IP:
                     ip = pkt.get_protocol(ipv4.ipv4)
                     srcip = ip.src
                     dstip = ip.dst
                     self.ip_to_port[dpid][srcip] = in_port
                     print(self.ip_to_port)
-                    print('HAY TRAFICO MULTICAST')
                     self.manage_Multicast(datapath, in_port, origen, dstip)
             else:
+                print('MULTICAST NO CAPA 3')
                 return
         else:
             print('NO HAY TRAFICO MULTICAST')
@@ -205,10 +205,18 @@ class Capa2(app_manager.RyuApp):
 
 
     def manage_Multicast(self, datapath, in_port, origen, destino):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
 
         dpid = datapath.id
         #print(self.gruposM)
         if destino in self.gruposM[dpid]:
+
+            'Agrego flujo a flow table para ir a grouptable'
+            actions = [parser.OFPActionGroup(group_id=50)]
+            match = self.match(datapath, in_port, destino)
+            self.add_flow(datapath, PRIORITY_MAX, match, actions)
+
             self.encaminoMulticast(datapath, destino, dpid)
         else:
             print('NO EXISTE ESE GRUPO MULTICAST {}'.format(destino))
@@ -219,8 +227,11 @@ class Capa2(app_manager.RyuApp):
         puertos = self.getGroupPorts(destino, dpid)
         print('Los puertos del grupo multicast {} son: {}'.format(destino, puertos))
 
+        buckets = self.generoBuckets(datapath, puertos)
         'FALTA GENERAR BUCKETS PARA LA GROUP TABLE'
-        
+
+        #self.add_group_flow(datapath, 100, )
+
         return
 
 
@@ -250,12 +261,16 @@ class Capa2(app_manager.RyuApp):
         puertos = self.getPorts(destino, dpid)
         print(puertos)
         for puerto, p_info in puertos.items():
-            if p_info['out'] == True:
+            if p_info['in'] == True:
                 puertosOUT.append(puerto)
             #elif p_info['in'] ==True:
             #    puertosIN.append(puerto)
         return puertosOUT
 
+
+    def generoBuckets(self, datapath, puertos):
+        pass
+        
 
     def dropPackage(self, datapath, priority, match, buffer_id=None):
         'Funcion para dropear trafico'
@@ -265,27 +280,24 @@ class Capa2(app_manager.RyuApp):
                                 priority=priority,
                                 match=match,
                                 instructions=[])
-        datapath.send_msg(msg)
+        return msg
 
 
     def NotRequiredTraffic(self, datapath):
         'Se filtra trafico no deseado en la red'
         global PRIORITY_MAX
-
+        msgs = []
         #DROPS
-        self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_LLDP))
-        #datapath.send_msg(msg)
+        msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_LLDP)))
 
         # Drop STDP BPDU
-        self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_dst='01:80:c2:00:00:00'))
-        #datapath.send_msg(msg)
-        self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_dst='01:00:0c:cc:cc:cd'))
-        #datapath.send_msg(msg)
+        msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_dst='01:80:c2:00:00:00')))
+        msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_dst='01:00:0c:cc:cc:cd')))
 
         # Drop Broadcast Sources
-        self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_src='ff:ff:ff:ff:ff:ff'))
-        #datapath.send_msg(msg)
-        #msgs += self.dropPackage(dp, self.match(dp, eth_dst ='ff:ff:ff:ff:ff:ff'))
+        msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_src='ff:ff:ff:ff:ff:ff')))
 
-        self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_IPV6))
+        msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_IPV6)))
         #datapath.send_msg(msg)
+
+        self.send_msgs(datapath, msgs)
