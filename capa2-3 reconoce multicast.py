@@ -224,7 +224,7 @@ class Capa2(app_manager.RyuApp):
         'FALTA GENERAR BUCKETS PARA LA GROUP TABLE'
 
         self.add_group_flow(datapath, 50, ofproto.OFPGC_MODIFY, ofproto.OFPGT_ALL, bucketsOutput)
-        #self.add_group_flow(datapath, 50, ofproto.OFPGC_ADD, ofproto.OFPGT_ALL, bucketsOutput)
+        
 
     def getPorts(self, destino, dpid):
         'Se obtiene diccionario de puertos del switch'
