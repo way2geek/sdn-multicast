@@ -10,32 +10,13 @@ from ryu.lib.packet import ipv4
 from ryu.lib.packet import in_proto
 
 
-grupos = {
-    1:{
-        '225.0.0.1':{
-                    'replied':True,
-                    'leave':False,
-                    'ports':{
-                            3:{
-                               'out':True,
-                               'in':False
-                              },
-                            1:{
-                               'out':True,
-                               'in':False
-                              }
-                            }
-                    }
-       }
-}
-
-
 PRIORITY_MAX = 1000
 PRIORITY_MID = 900
 PRIORITY_LOW = 800
 PRIORITY_MIN = 700
 
 TABLE_MAC = 10
+GROUP_TABLE = 50
 
 class Capa2(app_manager.RyuApp):
 
@@ -62,6 +43,7 @@ class Capa2(app_manager.RyuApp):
                }
         }
 
+
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
         datapath = ev.msg.datapath
@@ -74,6 +56,16 @@ class Capa2(app_manager.RyuApp):
         actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
                                           ofproto.OFPCML_NO_BUFFER)]
         self.add_flow(datapath, PRIORITY_MIN, match, actions)
+
+        'Agrego flujo a flow table para ir a grouptable'
+
+        self.add_group_flow(datapath, 50, ofproto.OFPGC_ADD,
+                            ofproto.OFPGT_ALL)
+        actions = [parser.OFPActionGroup(group_id=50),
+                   parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
+        match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
+                                ipv4_dst=('224.0.0.0', '240.0.0.0'))
+        self.add_flow(datapath, PRIORITY_MAX, match, actions)
 
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
@@ -194,12 +186,16 @@ class Capa2(app_manager.RyuApp):
         datapath.send_msg(mod)
 
 
-    def add_group_flow(self, datapath, group_id, command, type, buckets):
+    def add_group_flow(self, datapath, group_id, command, type, buckets=None):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
-        mod = parser.OFPGroupMod(datapath=datapath, group_id=group_id, command=command,
+        if buckets:
+            mod = parser.OFPGroupMod(datapath=datapath, group_id=group_id, command=command,
                                  type_=type, buckets=buckets)
+        else:
+            mod = parser.OFPGroupMod(datapath=datapath, group_id=group_id, command=command,
+                                 type_=type)
 
         datapath.send_msg(mod)
 
@@ -212,28 +208,23 @@ class Capa2(app_manager.RyuApp):
         #print(self.gruposM)
         if destino in self.gruposM[dpid]:
 
-            'Agrego flujo a flow table para ir a grouptable'
-            actions = [parser.OFPActionGroup(group_id=50)]
-            match = self.match(datapath, in_port, destino)
-            self.add_flow(datapath, PRIORITY_MAX, match, actions)
-
             self.encaminoMulticast(datapath, destino, dpid)
         else:
             print('NO EXISTE ESE GRUPO MULTICAST {}'.format(destino))
 
 
     def encaminoMulticast(self, datapath, destino, dpid):
+        ofproto = datapath.ofproto
 
-        puertos = self.getGroupPorts(destino, dpid)
+        puertos = self.getGroupOutPorts(destino, dpid)
         print('Los puertos del grupo multicast {} son: {}'.format(destino, puertos))
 
-        buckets = self.generoBuckets(datapath, puertos)
+        bucketsOutput = self.generoBuckets(datapath, puertos)
+        print('Los buckets del grupo multicast {} son: {}'.format(destino, bucketsOutput))
         'FALTA GENERAR BUCKETS PARA LA GROUP TABLE'
 
-        #self.add_group_flow(datapath, 100, )
-
-        return
-
+        self.add_group_flow(datapath, 50, ofproto.OFPGC_MODIFY, ofproto.OFPGT_ALL, bucketsOutput)
+        #self.add_group_flow(datapath, 50, ofproto.OFPGC_ADD, ofproto.OFPGT_ALL, bucketsOutput)
 
     def getPorts(self, destino, dpid):
         'Se obtiene diccionario de puertos del switch'
@@ -254,7 +245,7 @@ class Capa2(app_manager.RyuApp):
         return ports
 
 
-    def getGroupPorts(self, destino, dpid):
+    def getGroupOutPorts(self, destino, dpid):
         'Se obtienen los puertos de salida de un switch referidos a un grupo multicast'
 
         puertosOUT = []
@@ -269,8 +260,26 @@ class Capa2(app_manager.RyuApp):
 
 
     def generoBuckets(self, datapath, puertos):
-        pass
-        
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        actions = []
+        buckets = []
+
+        for outPort in puertos:
+            #print(outPort)
+            accion = [parser.OFPActionOutput(outPort)]
+            actions.append(accion)
+
+        print(len(actions))
+
+        for action in actions:
+            bucket = parser.OFPBucket(actions=action)
+            buckets.append(bucket)
+
+        print(len(buckets))
+
+        return buckets
+
 
     def dropPackage(self, datapath, priority, match, buffer_id=None):
         'Funcion para dropear trafico'
