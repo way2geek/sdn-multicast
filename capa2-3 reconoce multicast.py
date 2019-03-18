@@ -15,33 +15,50 @@ PRIORITY_MID = 900
 PRIORITY_LOW = 800
 PRIORITY_MIN = 700
 
-TABLE_MAC = 10
-GROUP_TABLE = 50
 
 class Capa2(app_manager.RyuApp):
+    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
+    _CONTEXTS = {'igmplib': igmplib.IgmpLib}
 
     def __init__(self, *args, **kwargs):
         super(Capa2, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
         self.ip_to_port = {}
+        
+        'DEFINO SWITCH DE LA TOPOLOGIA COMO QUERIER'
+        self._snoop = kwargs['igmplib']
+        self._snoop.set_querier_mode(
+            dpid=str_to_dpid('0000000000000001'), server_port=2)
+
         self.gruposM = {
             1:{
               '225.0.0.1':{
-                            'replied':True,
-                            'leave':False,
-                            'ports':{
-                                    3:{
-                                       'out':False,
-                                       'in':True
-                                      },
-                                    1:{
-                                       'out':False,
-                                       'in':True
-                                      }
-                                    }
-                            }
+                        'replied':True,
+                        'leave':False,
+                        'ports':{
+                                3:{
+                                   'out':False,
+                                   'in':True
+                                  },
+                                1:{
+                                   'out':False,
+                                   'in':True
+                                  }
+                                }
+                        },
+              '225.0.0.2':{
+                          'replied':True,
+                          'leave':False,
+                          'ports':{
+                                  4:{
+                                     'out':False,
+                                     'in':True
+                                    },
+                                  }
+                          }
                }
-        }
+            }
+        self.groupID = []
 
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
@@ -59,9 +76,9 @@ class Capa2(app_manager.RyuApp):
 
         'Agrego flujo a flow table para ir a grouptable'
 
-        self.add_group_flow(datapath, 50, ofproto.OFPGC_ADD,
+        self.add_group_flow(datapath, self.groupID, ofproto.OFPGC_ADD,
                             ofproto.OFPGT_ALL)
-        actions = [parser.OFPActionGroup(group_id=50),
+        actions = [parser.OFPActionGroup(group_id=self.groupID),
                    parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
         match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
                                 ipv4_dst=('224.0.0.0', '240.0.0.0'))
@@ -94,15 +111,6 @@ class Capa2(app_manager.RyuApp):
         self.ip_to_port.setdefault(dpid, {})
         self.mac_to_port[dpid][origen] = in_port
         print(self.mac_to_port)
-
-
-        #if eth.ethertype == ether_types.ETH_TYPE_IP:
-        #        ip = pkt.get_protocol(ipv4.ipv4)
-        #        srcip = ip.src
-        #        dstip = ip.dst
-        #        self.ip_to_port[dpid][srcip] = in_port
-        #        print(self.ip_to_port)
-
 
         if self.esMulticast(destino):
             print('HAY TRAFICO MULTICAST')
@@ -205,11 +213,13 @@ class Capa2(app_manager.RyuApp):
         parser = datapath.ofproto_parser
 
         dpid = datapath.id
-        #print(self.gruposM)
+
         if destino in self.gruposM[dpid]:
 
             self.encaminoMulticast(datapath, destino, dpid)
         else:
+            self.obtenerGroupID()
+            self.encaminoMulticast(datapath, destino, dpid)
             print('NO EXISTE ESE GRUPO MULTICAST {}'.format(destino))
 
 
@@ -223,8 +233,8 @@ class Capa2(app_manager.RyuApp):
         print('Los buckets del grupo multicast {} son: {}'.format(destino, bucketsOutput))
         'FALTA GENERAR BUCKETS PARA LA GROUP TABLE'
 
-        self.add_group_flow(datapath, 50, ofproto.OFPGC_MODIFY, ofproto.OFPGT_ALL, bucketsOutput)
-        
+        self.add_group_flow(datapath, self.groupID, ofproto.OFPGC_MODIFY, ofproto.OFPGT_ALL, bucketsOutput)
+
 
     def getPorts(self, destino, dpid):
         'Se obtiene diccionario de puertos del switch'
@@ -234,11 +244,8 @@ class Capa2(app_manager.RyuApp):
 
         for s_id, g_info in self.gruposM.items():
             if s_id == dpid:
-                #print(dpid)
                 for dst, d_info in g_info.items():
-                    #print(dst)
                     if destino == dst:
-                        #print('holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
                         ports = d_info['ports']
                     else:
                         print('NO SE ENCUENTRA EL GRUPO REGISTRADO')
@@ -266,17 +273,13 @@ class Capa2(app_manager.RyuApp):
         buckets = []
 
         for outPort in puertos:
-            #print(outPort)
+
             accion = [parser.OFPActionOutput(outPort)]
             actions.append(accion)
-
-        print(len(actions))
 
         for action in actions:
             bucket = parser.OFPBucket(actions=action)
             buckets.append(bucket)
-
-        print(len(buckets))
 
         return buckets
 
@@ -307,6 +310,10 @@ class Capa2(app_manager.RyuApp):
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_src='ff:ff:ff:ff:ff:ff')))
 
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_IPV6)))
-        #datapath.send_msg(msg)
 
         self.send_msgs(datapath, msgs)
+
+
+    def obtenerGroupID(self):
+        self.groupID = self.groupID + 1
+        return self.groupID
