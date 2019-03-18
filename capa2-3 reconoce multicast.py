@@ -8,6 +8,8 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib.packet import ipv4
 from ryu.lib.packet import in_proto
+from ryu.lib import igmplib
+from ryu.lib.dpid import str_to_dpid
 
 
 PRIORITY_MAX = 1000
@@ -24,11 +26,11 @@ class Capa2(app_manager.RyuApp):
         super(Capa2, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
         self.ip_to_port = {}
-        
+
         'DEFINO SWITCH DE LA TOPOLOGIA COMO QUERIER'
         self._snoop = kwargs['igmplib']
         self._snoop.set_querier_mode(
-            dpid=str_to_dpid('0000000000000001'), server_port=2)
+            dpid=str_to_dpid('0000000000000002'), server_port=2)
 
         self.gruposM = {
             1:{
@@ -58,7 +60,7 @@ class Capa2(app_manager.RyuApp):
                           }
                }
             }
-        self.groupID = []
+        self.groupID = 100
 
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
@@ -110,7 +112,7 @@ class Capa2(app_manager.RyuApp):
         self.mac_to_port.setdefault(dpid, {})
         self.ip_to_port.setdefault(dpid, {})
         self.mac_to_port[dpid][origen] = in_port
-        print(self.mac_to_port)
+        #print(self.mac_to_port)
 
         if self.esMulticast(destino):
             print('HAY TRAFICO MULTICAST')
@@ -118,9 +120,13 @@ class Capa2(app_manager.RyuApp):
                     ip = pkt.get_protocol(ipv4.ipv4)
                     srcip = ip.src
                     dstip = ip.dst
+                    protocol = ip.proto
                     self.ip_to_port[dpid][srcip] = in_port
-                    print(self.ip_to_port)
-                    self.manage_Multicast(datapath, in_port, origen, dstip)
+                    #print(self.ip_to_port)
+
+                    if protocol != in_proto.IPPROTO_IGMP:
+                        print('NO ES IGMP')
+                        self.manage_Multicast(datapath, in_port, origen, dstip)
             else:
                 print('MULTICAST NO CAPA 3')
                 return
@@ -150,6 +156,18 @@ class Capa2(app_manager.RyuApp):
                                               in_port=in_port, actions=actions, data=data)
             datapath.send_msg(out)
 
+
+    @set_ev_cls(igmplib.EventMulticastGroupStateChanged,
+                MAIN_DISPATCHER)
+    def _status_changed(self, ev):
+        msg = {
+            igmplib.MG_GROUP_ADDED: 'Multicast Group Added',
+            igmplib.MG_MEMBER_CHANGED: 'Multicast Group Member Changed',
+            igmplib.MG_GROUP_REMOVED: 'Multicast Group Removed',
+        }
+        self.logger.info("%s: [%s] querier:[%s] hosts:%s",
+                         msg.get(ev.reason), ev.address, ev.src,
+                         ev.dsts)
 
 
     def send_msgs(self, dp, msgs):
@@ -230,13 +248,13 @@ class Capa2(app_manager.RyuApp):
         print('Los puertos del grupo multicast {} son: {}'.format(destino, puertos))
 
         bucketsOutput = self.generoBuckets(datapath, puertos)
-        print('Los buckets del grupo multicast {} son: {}'.format(destino, bucketsOutput))
+        #print('Los buckets del grupo multicast {} son: {}'.format(destino, bucketsOutput))
         'FALTA GENERAR BUCKETS PARA LA GROUP TABLE'
 
         self.add_group_flow(datapath, self.groupID, ofproto.OFPGC_MODIFY, ofproto.OFPGT_ALL, bucketsOutput)
 
 
-    def getPorts(self, destino, dpid):
+    def getGroupPorts(self, destino, dpid):
         'Se obtiene diccionario de puertos del switch'
         ports = {}
         puertosOut = []
@@ -247,8 +265,6 @@ class Capa2(app_manager.RyuApp):
                 for dst, d_info in g_info.items():
                     if destino == dst:
                         ports = d_info['ports']
-                    else:
-                        print('NO SE ENCUENTRA EL GRUPO REGISTRADO')
         return ports
 
 
@@ -256,7 +272,7 @@ class Capa2(app_manager.RyuApp):
         'Se obtienen los puertos de salida de un switch referidos a un grupo multicast'
 
         puertosOUT = []
-        puertos = self.getPorts(destino, dpid)
+        puertos = self.getGroupPorts(destino, dpid)
         print(puertos)
         for puerto, p_info in puertos.items():
             if p_info['in'] == True:
