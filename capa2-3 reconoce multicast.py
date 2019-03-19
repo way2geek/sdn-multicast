@@ -60,7 +60,15 @@ class Capa2(app_manager.RyuApp):
                           }
                }
             }
-        self.groupID = 100
+        self.groupID = 1
+        self.lista_grupos={}
+
+        #carga y genera los group ID correspondientes para los gruposM
+        #provenientes del diccionario
+        for dpath_id_aux in self.gruposM:
+            for grupo_existente in self.gruposM[dpath_id_aux]:
+                self.unir_direccion_grupo(grupo_existente)
+
 
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
@@ -225,7 +233,7 @@ class Capa2(app_manager.RyuApp):
 
         datapath.send_msg(mod)
 
-
+        ## no tiene lo de "con diccionario"
     def manage_Multicast(self, datapath, in_port, origen, destino):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
@@ -330,6 +338,32 @@ class Capa2(app_manager.RyuApp):
         self.send_msgs(datapath, msgs)
 
 
-    def obtenerGroupID(self):
+    def obtenerGroupID(self, destino):
+        print "group ID anterior: "
+        print self.groupID
+        #Cambiar valor de Group ID
         self.groupID = self.groupID + 1
+        self.unir_direccion_grupo(destino)
+        print "group ID nuevo: "
+        print self.groupID
         return self.groupID
+
+    def quitar_direccion_grupo(self, ip_mcast):
+        #Elimina del diccionario grupo multicast
+        print "saque IP:"
+        print (ip_mcast)
+        self.lista_grupos.pop(ip_mcast)
+
+    def unir_direccion_grupo(self, ip_mcast):
+        print "Agregue IP NUEVA:"
+        print (ip_mcast)
+        #Almacenar en diccionario relacion IP:group ID
+        self.lista_grupos.update({ip_mcast:self.groupID})
+
+    #funcion para eliminar las rutas para un grupo multicast
+    #que ya no se utilice
+    def eliminar_flow_mcast(self, ip_mcast):
+        print "elimino grupo multicast"
+        print (ip_mcast)
+        self.quitar_direccion_grupo(ip_mcast)
+        #TODO: agregar borrado de openflow
