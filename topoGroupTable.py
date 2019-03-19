@@ -14,7 +14,7 @@ class Topologia(Topo):
     def build(self):
         info( '*** Adding switches\n')
         s1 = self.addSwitch('s1')
-        #s2 = self.addSwitch('s2')
+        s2 = self.addSwitch('s2')
 
         info( '*** Adding hosts\n')
         h1 = self.addHost('h1', mac="00:00:00:00:11:11", ip="192.168.1.11/24")
@@ -25,7 +25,7 @@ class Topologia(Topo):
         #h6 = self.addHost('h6', mac="00:00:00:00:11:16", ip="192.168.1.16/24")
 
         info( '*** Adding links\n')
-        #self.addLink(s1, s2)
+        self.addLink(s1, s2, 5, 1)
         self.addLink(h1, s1, 1, 1)
         self.addLink(h2, s1, 1, 2)
         self.addLink(h3, s1, 1, 3)
@@ -65,10 +65,10 @@ if __name__ == '__main__':
 
     #COMANDOS A SWITCHES
     s1 = net.get('s1')
-#    s2 = net.get('s2')
+    s2 = net.get('s2')
 
     #Establezco la version OPenFlow1.3 en los switches
     s1.cmd('ovs-vsctl set Bridge s1 protocols=OpenFlow13')
-#    s2.cmd('ovs-vsctl set Bridge s2 protocols=OpenFlow13')
+    s2.cmd('ovs-vsctl set Bridge s2 protocols=OpenFlow13')
 
     CLI(net)
