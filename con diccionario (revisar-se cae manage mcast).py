@@ -65,7 +65,9 @@ class Capa2(app_manager.RyuApp):
         #provenientes del diccionario
         for dpath_id_aux in self.gruposM:
             for grupo_existente in self.gruposM[dpath_id_aux]:
+                #self.groupID = self.groupID + 1
                 self.unir_direccion_grupo(grupo_existente)
+
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -81,16 +83,13 @@ class Capa2(app_manager.RyuApp):
         self.add_flow(datapath, PRIORITY_MIN, match, actions)
 
         'Agrego flujo a flow table para ir a grouptable'
-        self.add_group_flow(datapath, 0, ofproto.OFPGC_MODIFY,
-                        ofproto.OFPGT_ALL)
-
-        self.add_group_flow(datapath, self.groupID, ofproto.OFPGC_ADD,
-                            ofproto.OFPGT_ALL)
-        actions = [parser.OFPActionGroup(group_id=self.groupID),
-                   parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
-        match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
-                                ipv4_dst=('224.0.0.0', '240.0.0.0'))
-        self.add_flow(datapath, PRIORITY_MAX, match, actions)
+        #self.add_group_flow(datapath, self.groupID, ofproto.OFPGC_ADD,
+        #                    ofproto.OFPGT_ALL)
+        #actions = [parser.OFPActionGroup(group_id=self.groupID),
+        #           parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
+        #match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
+        #                        ipv4_dst=('224.0.0.0', '240.0.0.0'))
+        #self.add_flow(datapath, PRIORITY_MAX, match, actions)
 
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
@@ -121,7 +120,7 @@ class Capa2(app_manager.RyuApp):
         print(self.mac_to_port)
 
         if self.esMulticast(destino):
-            print('HAY TRAFICO MULTICAST')
+            print('HAY TRAFICO MULTICAST\n')
             if eth.ethertype == ether_types.ETH_TYPE_IP:
                     ip = pkt.get_protocol(ipv4.ipv4)
                     srcip = ip.src
@@ -207,11 +206,11 @@ class Capa2(app_manager.RyuApp):
         parser = datapath.ofproto_parser
 
         if buckets:
-            mod = parser.OFPGroupMod(datapath=datapath, group_id=group_id, command=command,
-                                 type_=type, buckets=buckets)
+            mod = parser.OFPGroupMod(datapath=datapath, command=command, type_=type,
+                                     group_id=group_id ,buckets=buckets)
         else:
             mod = parser.OFPGroupMod(datapath=datapath, group_id=group_id, command=command,
-                                 type_=type)
+                                     type_=type)
 
         datapath.send_msg(mod)
 
@@ -220,31 +219,30 @@ class Capa2(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
         dpid = datapath.id
+        destinoReg = []
 
         #### NUEVO
         #Se carga group table con group ID existente o
         #uno nuevo segun ya exista el grupo o no
         if destino in self.gruposM[dpid]:
-            print "hola"
-            print (self.lista_grupos[destino])
-            x = self.lista_grupos[destino]
-            print (x)
-            x=7
-            actions = [parser.OFPActionGroup(group_id=x),
-                        parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
+
+            group_id = self.lista_grupos[destino]
+
+            actions = [parser.OFPActionGroup(group_id=group_id)]
+
+            print('EL ID DEL GRUPO DEL DESTINO {} ES'.format(self.lista_grupos[destino]))
+
             match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
                                     ipv4_dst=destino)
-            print (actions)
+
             self.add_flow(datapath, PRIORITY_MAX, match, actions)
             self.encaminoMulticast(datapath, destino, dpid)
 
         else:
-            print "ola"
-            actions = [parser.OFPActionGroup(group_id=self.obtenerGroupID(destino)),
-                       parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
+            actions = [parser.OFPActionGroup(group_id=self.obtenerGroupID(destino))]
             match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
                                     ipv4_dst=destino)
-            print (actions)
+
             self.add_flow(datapath, PRIORITY_MAX, match, actions)
             self.encaminoMulticast(datapath, destino, dpid)
             print('NO EXISTE ESE GRUPO MULTICAST {}'.format(destino))
@@ -255,12 +253,12 @@ class Capa2(app_manager.RyuApp):
         ofproto = datapath.ofproto
 
         puertos = self.getGroupOutPorts(destino, dpid)
-        print('Los puertos del grupo multicast {} son: {}'.format(destino, puertos))
+        print('Los puertos del grupo multicast {} son: {}\n'.format(destino, puertos))
 
         bucketsOutput = self.generoBuckets(datapath, puertos)
-        print('Los buckets del grupo multicast {} son: {}'.format(destino, bucketsOutput))
 
-        self.add_group_flow(datapath, self.groupID, ofproto.OFPGC_MODIFY, ofproto.OFPGT_ALL, bucketsOutput)
+        '*****AGREGAR CONDICION DE PUERTOS PARA NO VOLVER A AGREGAR GROUP TABLE*****'
+        self.add_group_flow(datapath, self.lista_grupos[destino], ofproto.OFPGC_ADD, ofproto.OFPGT_ALL, bucketsOutput)
 
 
     def getPorts(self, destino, dpid):
@@ -275,8 +273,6 @@ class Capa2(app_manager.RyuApp):
                     if destino == dst:
                         ports = d_info['ports']
                     #     print "pase por if ok"
-                    # else:
-                    #     print('NO SE ENCUENTRA EL GRUPO REGISTRADO')
         return ports
 
 
@@ -284,12 +280,12 @@ class Capa2(app_manager.RyuApp):
         'Se obtienen los puertos de salida de un switch referidos a un grupo multicast'
         puertosOUT = []
         puertos = self.getPorts(destino, dpid)
-        print(puertos)
+
         for puerto, p_info in puertos.items():
             if p_info['in'] == True:
                 puertosOUT.append(puerto)
-            elif p_info['in'] ==True:
-               puertosIN.append(puerto)
+            #elif p_info['in'] ==True:
+              # puertosIN.append(puerto)
         return puertosOUT
 
 
@@ -352,17 +348,21 @@ class Capa2(app_manager.RyuApp):
         print self.groupID
         return self.groupID
 
+
     def quitar_direccion_grupo(self, ip_mcast):
         #Elimina del diccionario grupo multicast
         print "saque IP:"
         print (ip_mcast)
         self.lista_grupos.pop(ip_mcast)
 
+
     def unir_direccion_grupo(self, ip_mcast):
         print "Agregue IP NUEVA:"
         print (ip_mcast)
         #Almacenar en diccionario relacion IP:group ID
         self.lista_grupos.update({ip_mcast:self.groupID})
+        print(self.lista_grupos)
+
 
     #funcion para eliminar las rutas para un grupo multicast
     #que ya no se utilice
@@ -371,5 +371,14 @@ class Capa2(app_manager.RyuApp):
         print (ip_mcast)
         self.quitar_direccion_grupo(ip_mcast)
         #TODO: agregar borrado de openflow
+
+
+    def cargarGroupID(self):
+        #carga y genera los group ID correspondientes para los gruposM
+        #provenientes del diccionario
+        for dpath_id_aux in self.gruposM:
+            for grupo_existente in self.gruposM[dpath_id_aux]:
+                self.unir_direccion_grupo(grupo_existente)
+
 
 ####FIN NUEVO

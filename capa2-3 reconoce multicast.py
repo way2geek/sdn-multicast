@@ -32,34 +32,9 @@ class Capa2(app_manager.RyuApp):
         self._snoop.set_querier_mode(
             dpid=str_to_dpid('0000000000000002'), server_port=2)
 
-        self.gruposM = {
-            1:{
-              '225.0.0.1':{
-                        'replied':True,
-                        'leave':False,
-                        'ports':{
-                                3:{
-                                   'out':False,
-                                   'in':True
-                                  },
-                                1:{
-                                   'out':False,
-                                   'in':True
-                                  }
-                                }
-                        },
-              '225.0.0.2':{
-                          'replied':True,
-                          'leave':False,
-                          'ports':{
-                                  4:{
-                                     'out':False,
-                                     'in':True
-                                    },
-                                  }
-                          }
-               }
-            }
+        'Obtengo grupos multicast generados por el protocolo IGMP'
+        self.gruposM = self._snoop._snooper._to_hosts
+
         self.groupID = 1
         self.lista_grupos={}
 
@@ -91,7 +66,7 @@ class Capa2(app_manager.RyuApp):
         actions = [parser.OFPActionGroup(group_id=self.groupID),
                    parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
         match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
-                                ipv4_dst=('224.0.0.0', '240.0.0.0'))
+                                ipv4_dst=('225.0.0.0', '240.0.0.0'))
         self.add_flow(datapath, PRIORITY_MAX, match, actions)
 
 
@@ -244,7 +219,7 @@ class Capa2(app_manager.RyuApp):
 
             self.encaminoMulticast(datapath, destino, dpid)
         else:
-            self.obtenerGroupID()
+            self.obtenerGroupID(destino)
             self.encaminoMulticast(datapath, destino, dpid)
             print('NO EXISTE ESE GRUPO MULTICAST {}'.format(destino))
 
