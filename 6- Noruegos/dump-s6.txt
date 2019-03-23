@@ -1,0 +1,19 @@
+$ sudo ovs-ofctl -O openflow13 dump-flows s6 --sort=nw_src
+
+OFPST_FLOW reply (OF1.3) (xid=0x2):
+ cookie=0x0, duration=517.216s, table=0, n_packets=1, n_bytes=49, priority=1,ip,in_port=2,nw_src=10.0.0.1,nw_dst=239.192.0.1 actions=group:3
+ cookie=0x0, duration=517.260s, table=0, n_packets=0, n_bytes=0, priority=1,ip,in_port=3,nw_src=10.0.0.2,nw_dst=239.192.0.1 actions=group:1
+ cookie=0x0, duration=517.237s, table=0, n_packets=0, n_bytes=0, priority=1,ip,in_port=4,nw_src=10.0.0.3,nw_dst=239.192.0.1 actions=group:2
+ cookie=0x0, duration=517.194s, table=0, n_packets=0, n_bytes=0, priority=1,ip,in_port=3,nw_src=10.0.0.4,nw_dst=239.192.0.1 actions=group:4
+ cookie=0x0, duration=517.169s, table=0, n_packets=0, n_bytes=0, priority=1,ip,in_port=3,nw_src=10.0.0.5,nw_dst=239.192.0.1 actions=group:5
+ cookie=0x0, duration=517.140s, table=0, n_packets=1, n_bytes=49, priority=1,ip,in_port=5,nw_dst=239.192.0.1 actions=set_field:63->ip_dscp,group:6
+
+$ sudo ovs-ofctl -O openflow13 dump-groups s6
+
+OFPST_GROUP_DESC reply (OF1.3) (xid=0x2):
+ group_id=6,type=all,bucket=weight:0,actions=output:3
+ group_id=4,type=all,bucket=weight:0,actions=output:5
+ group_id=1,type=all,bucket=weight:0,actions=output:5
+ group_id=5,type=all,bucket=weight:0,actions=output:5
+ group_id=2,type=all,bucket=weight:0,actions=output:5
+ group_id=3,type=all,bucket=weight:0,actions=output:5
