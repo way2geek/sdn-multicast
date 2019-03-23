@@ -1,0 +1,40 @@
+{
+	"__COMMENT": "Network topology description used by network application and Mininet script",
+
+	"__COMMENT": "switches: each switch is a dictionary of adjacent switch name: local port switch",
+	"__COMMENT": "dpids: mapping from switch name to datapath id (only for app.py)",
+	"__COMMENT": "hosts: each host is a dictionary of attached switch, switch port and host IP address",
+	"__COMMENT": "low_hosts: array of low-capacity hosts, each as key in hosts dictionary",
+	"__COMMENT": "tees: transcoders, same format as hosts",
+
+
+	"switches": {
+		"s1": { "s2": 1},
+		"s2": { "s1": 1, "s3": 2},
+		"s3": { "s2": 2, "s4": 4},
+		"s4": { "s3":3}
+	},
+
+	"dpids": {
+		"s1": 1,
+		"s2": 2,
+		"s3": 3,
+		"s4": 4
+	},
+
+	"hosts": {
+		"h1": { "switch": "s1", "port": 7, "ip": "10.0.0.1" },
+		"h2": { "switch": "s1", "port": 3, "ip": "10.0.0.2" },
+		"h3": { "switch": "s1", "port": 4, "ip": "10.0.0.3" },
+		"h4": { "switch": "s1", "port": 5, "ip": "10.0.0.4" },
+		"h5": { "switch": "s1", "port": 6, "ip": "10.0.0.5" }
+	},
+
+	"low_hosts": [
+		"h4"
+	],
+
+	"tees": {
+		"T1": { "switch": "s1", "port": 9, "ip": "10.0.0.255" }
+	}
+}
