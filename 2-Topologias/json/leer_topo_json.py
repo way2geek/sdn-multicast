@@ -41,7 +41,6 @@ def net():
          hostdata = topojson['hosts'][host_name]
          net.addLink(host_name, hostdata['switch'], port2=hostdata['port'])
 
-
     # add controller and start network
     net.addController(controller=RemoteController, port=6633)
     net.start()

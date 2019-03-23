@@ -43,7 +43,7 @@ def load_json_topology (filename):
 	low_hosts = topojson['low_hosts']
 	tees = topojson['tees']
 	dpids = topojson['dpids']
-	
+
 	for sw in switches:
 		gid[sw] = 1
 
@@ -59,13 +59,13 @@ def shortest_paths (src):
 
 	dist = {}
 	prev = {}
-	
+
 	tovisit = switches.keys()
 	for node in tovisit:
 		dist[node] = float('inf')
 		prev[node] = None
 	dist[src] = 0
-	
+
 	while len(tovisit) > 0:
 		# extract node u closest to the set of visited nodes
 		tovisit.sort(key = lambda x: dist[x])
@@ -77,7 +77,7 @@ def shortest_paths (src):
 				if tmp < dist[v]:
 					dist[v] = tmp
 					prev[v] = u
-	
+
 	return prev
 
 
@@ -239,7 +239,8 @@ def install_lq_flows():
 
 def dump_sp():
 	for s in sp:
-		print "sp[%s]:" % (s, sp[s])
+		# print "sp[%s]:" % (s, sp[s])
+		print "sp[%s]: %s " % (s, sp[s])
 	print #newline
 
 
@@ -261,7 +262,7 @@ def dump_ss_trees():
 					print "    pre[%s]=%s, port=%d" % (cur,pre,port)
 					cur = pre
 					pre = sp[src][cur]
-		
+
 		for t in tees: # transcoders (also part of multicast group)
 			dst = tees[t]['switch'] # destination switch
 			print "  dest: %s (%s)" % (t,dst)
@@ -273,7 +274,7 @@ def dump_ss_trees():
 				print "    pre[%s]=%s, port=%d" % (cur,pre,port)
 				cur = pre
 				pre = sp[src][cur]
-		
+
 		portbuf = "ports:"
 		for sw in ports[sh]:
 			for port in ports[sh][sw]:
@@ -314,14 +315,14 @@ def menu():
 		{'str': "Dump source-specific trees", 'action': dump_ss_trees},
 		{'str': "Dump low-capacity trees", 'action': dump_low_trees}
 	]
-	
+
 	while True: # until quit
 		while True: # while bad input
-		
+
 			for i in range(len(options)):
 				print "  %d - %s" % (i, options[i]['str'])
 			print #newline
-	
+
 			try:
 				choice = int(raw_input("Choose an option: "))
 				if choice < 0 or choice >= len(options):
@@ -334,19 +335,19 @@ def menu():
 				print #newline
 				choice = 0
 				break
-		
+
 		print #newline
-		
+
 		if choice == 0: # quit
 			break
-	
+
 		if not options[choice]['action'] is None:
 			options[choice]['action']()
 
 
 if __name__ == "__main__":
 	print "** Loading topology **"
-	load_json_topology("../topo/topo1.json")
+	load_json_topology("topo/topo1.json")
 	print "** Generating shortest paths (source-specific trees) **"
 	shortest_paths_all()
 	print "** Generating port sets for high-capacity trees **"
