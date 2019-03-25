@@ -53,16 +53,18 @@ class Capa2(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
+
+        self.default_flows(datapath, parser, ofproto)
         #TABLE_1
-        match = self.match(datapath)
-        instructions = [parser.OFPInstructionGotoTable(TABLE_2)]
-        self.add_flow(datapath, TABLE_1, PRIORITY_MIN, match, instructions)
+        #match = self.match(datapath)
+        #instructions = [parser.OFPInstructionGotoTable(TABLE_2)]
+        #self.add_flow(datapath, TABLE_1, PRIORITY_MIN, match, instructions)
 
         #TABLE_2
-        self.NotRequiredTraffic(datapath)
-        actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
-        instructions = [self.apply_actions(datapath, actions)]
-        self.add_flow(datapath, TABLE_2, PRIORITY_MIN, match, instructions)
+        #self.NotRequiredTraffic(datapath)
+        #actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
+        #instructions = [self.apply_actions(datapath, actions)]
+        #self.add_flow(datapath, TABLE_2, PRIORITY_MIN, match, instructions)
 
         #TABLE_3
         #match = self.match(datapath, eth_type=ether_types.ETH_TYPE_IP,
@@ -116,32 +118,32 @@ class Capa2(app_manager.RyuApp):
             else:
                 print('MULTICAST NO CAPA 3')
                 return
-        else:
-            print('NO HAY TRAFICO MULTICAST')
-            if destino in self.mac_to_port[dpid]:
-                out_port = self.mac_to_port[dpid][destino]
-            else:
-                out_port = ofproto.OFPP_FLOOD
+        #else:
+            #print('NO HAY TRAFICO MULTICAST')
+            #if destino in self.mac_to_port[dpid]:
+            #    out_port = self.mac_to_port[dpid][destino]
+            #else:
+            #    out_port = ofproto.OFPP_FLOOD
 
-            actions = [parser.OFPActionOutput(out_port)]
-            instructions = [self.apply_actions(datapath, actions)]
+            #actions = [parser.OFPActionOutput(out_port)]
+            #instructions = [self.apply_actions(datapath, actions)]
 
-            if out_port != ofproto.OFPP_FLOOD:
-                match = self.match(datapath, in_port, destino, origen)
+            #if out_port != ofproto.OFPP_FLOOD:
+            #    match = self.match(datapath, in_port, destino, origen)
                 #instructions = [self.apply_actions(datapath, actions)]
 
-                if msg.buffer_id != ofproto.OFP_NO_BUFFER:
-                    self.add_flow(datapath, TABLE_2, PRIORITY_LOW, match, instructions, msg.buffer_id)
-                    return
-                else:
-                    self.add_flow(datapath, TABLE_2, PRIORITY_LOW, match, instructions)
-                data = None
-            if msg.buffer_id == ofproto.OFP_NO_BUFFER:
-                data = msg.data
+            #    if msg.buffer_id != ofproto.OFP_NO_BUFFER:
+            #        self.add_flow(datapath, TABLE_2, PRIORITY_LOW, match, instructions, msg.buffer_id)
+            #        return
+            #    else:
+            #        self.add_flow(datapath, TABLE_2, PRIORITY_LOW, match, instructions)
+            #    data = None
+            #if msg.buffer_id == ofproto.OFP_NO_BUFFER:
+            #    data = msg.data
 
-            out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
-                                              in_port=in_port, actions=actions, data=data)
-            datapath.send_msg(out)
+            #out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
+            #                                  in_port=in_port, actions=actions, data=data)
+            #datapath.send_msg(out)
 
 
     @set_ev_cls(igmplib.EventMulticastGroupStateChanged,
@@ -164,6 +166,8 @@ class Capa2(app_manager.RyuApp):
 
 
     def esMulticast(self, dst):
+        'Valida si direccion MAC es multicast'
+
         return (dst[0:2] == '01' or dst[0:5] == '33:33')
 
 
@@ -200,7 +204,24 @@ class Capa2(app_manager.RyuApp):
         return dp.ofproto_parser.OFPActionOutput(**kwargs)
 
 
+    def default_flows(self, datapath, parser, ofproto):
+        'Se crean e instalan flow tables y flujos por defecto'
+
+        #TABLE_1
+        match = self.match(datapath)
+        instructions = [parser.OFPInstructionGotoTable(TABLE_2)]
+        self.add_flow(datapath, TABLE_1, PRIORITY_MIN, match, instructions)
+
+        #TABLE_2
+        self.NotRequiredTraffic(datapath)
+        actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
+        instructions = [self.apply_actions(datapath, actions)]
+        self.add_flow(datapath, TABLE_2, PRIORITY_MIN, match, instructions)
+
+
     def add_flow(self, datapath, table_id, priority, match, instructions, buffer_id=None):
+        'Se genera flujo en flow table'
+
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
@@ -215,6 +236,8 @@ class Capa2(app_manager.RyuApp):
 
 
     def add_group_flow(self, datapath, group_id, command, type, buckets=None):
+        'Se genera flujo en group table'
+
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
@@ -228,18 +251,22 @@ class Capa2(app_manager.RyuApp):
 
 
     def add_flow_to_group(self, datapath, destino, group_id):
+        'Se genera flujo en flow table hacia la group table'
+
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
         match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
                                 ipv4_dst=destino)
-        action = [parser.OFPActionGroup(group_id=group_id)]
+        actions = [parser.OFPActionGroup(group_id=group_id)]
         instructions = [self.apply_actions(datapath, actions)]
 
+        print('AGREGO FLUJO A GROUP TABLE {}'.format(group_id))
         self.add_flow(datapath, TABLE_2, PRIORITY_MAX, match, instructions)
 
 
     def manage_Multicast(self, datapath, destino):
+        'Se recibe paquete con destino multicast y se encamina. Se valida si es un grupo nuevo.'
 
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
@@ -253,25 +280,30 @@ class Capa2(app_manager.RyuApp):
                 group_id = self.lista_grupos[destino]
                 print(group_id)
                 self.encaminoMulticast(datapath, destino, dpid, group_id, existe)
-
+                #self.add_flow_to_group(datapath, destino, group_id)
             else:
                 self.obtenerGroupID(destino)
+                print('GRUPO NUEVO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
                 group_id = self.lista_grupos[destino]
                 print(group_id)
                 self.encaminoMulticast(datapath, destino, dpid, group_id, existe)
                 self.add_flow_to_group(datapath, destino, group_id)
 
         else:
-            pass
+
+            print('NO SE ENCUENTRA REGISTRADO EL GRUPO')
             #self.eliminar_flow_mcast(destino)
             #FALTA HACER FUNCION PARA ELIMINAR GROUP TABLE
             #FALTA HACER FUNCION PARA ELIMINAR FLUJO
 
     def encaminoMulticast(self, datapath, destino, dpid, group_id, existe):
+        '''Se obtienen los puertos de salida del switch segun grupo multicast registrado
+        y se generan las acciones correspondientes'''
+
         ofproto = datapath.ofproto
 
         puertos = self.getGroupOutPorts(destino, dpid)
-        print('Los puertos del grupo multicast {} son: {}'.format(destino, puertos))
+        print('Los puertos del grupo multicast {} en el switch {} son: {}'.format(destino, dpid, puertos))
 
         bucketsOutput = self.generoBuckets(datapath, puertos)
 
@@ -283,6 +315,7 @@ class Capa2(app_manager.RyuApp):
 
     def getGroupPorts(self, destino, dpid):
         'Se obtiene diccionario de puertos del switch'
+
         ports = {}
         puertosOut = []
         puertosIn = []
@@ -310,6 +343,8 @@ class Capa2(app_manager.RyuApp):
 
 
     def generoBuckets(self, datapath, puertos):
+        'Se generan buckets de acciones para puertos de salida'
+
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
         actions = []
@@ -328,7 +363,8 @@ class Capa2(app_manager.RyuApp):
 
 
     def dropPackage(self, datapath, priority, match, buffer_id=None):
-        'Funcion para dropear trafico'
+        'Funcion para dropear paquetes no requeridos'
+
         parser = datapath.ofproto_parser
 
         msg = parser.OFPFlowMod(datapath=datapath,
@@ -341,6 +377,7 @@ class Capa2(app_manager.RyuApp):
 
     def NotRequiredTraffic(self, datapath):
         'Se filtra trafico no deseado en la red'
+
         global PRIORITY_MAX
         msgs = []
         #DROPS
