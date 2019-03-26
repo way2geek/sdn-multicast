@@ -53,8 +53,19 @@ class Capa2(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
+
         self.default_flows(datapath, parser, ofproto)
-        
+        #TABLE_1
+        #match = self.match(datapath)
+        #instructions = [parser.OFPInstructionGotoTable(TABLE_2)]
+        #self.add_flow(datapath, TABLE_1, PRIORITY_MIN, match, instructions)
+
+        #TABLE_2
+        #self.NotRequiredTraffic(datapath)
+        #actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, max_len=256)]
+        #instructions = [self.apply_actions(datapath, actions)]
+        #self.add_flow(datapath, TABLE_2, PRIORITY_MIN, match, instructions)
+
         #TABLE_3
         #match = self.match(datapath, eth_type=ether_types.ETH_TYPE_IP,
         #                        ipv4_dst=('224.0.0.0','240.0.0.0'))
@@ -272,9 +283,8 @@ class Capa2(app_manager.RyuApp):
                 #self.add_flow_to_group(datapath, destino, group_id)
             else:
                 self.obtenerGroupID(destino)
-                print('GRUPO NUEVO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
                 group_id = self.lista_grupos[destino]
-                print(group_id)
+                print('grupo nuevo {}'.format(group_id))
                 self.encaminoMulticast(datapath, destino, dpid, group_id, existe)
                 self.add_flow_to_group(datapath, destino, group_id)
 
