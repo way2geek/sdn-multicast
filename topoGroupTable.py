@@ -44,14 +44,14 @@ if __name__ == '__main__':
     h1 = net.get('h1')
     h2 = net.get('h2')
     h3 = net.get('h3')
-    #h4 = net.get('h4')
+    h4 = net.get('h4')
     #h5 = net.get('h5')
     #h6 = net.get('h6')
     # #Fuerzo version de IGMP
-    # h1.cmd('echo 2 > /proc/sys/net/ipv4/conf/h1-eth0/force_igmp_version')
-    # h2.cmd('echo 2 > /proc/sys/net/ipv4/conf/h2-eth0/force_igmp_version')
-    # h3.cmd('echo 2 > /proc/sys/net/ipv4/conf/h3-eth0/force_igmp_version')
-    # h4.cmd('echo 2 > /proc/sys/net/ipv4/conf/h4-eth0/force_igmp_version')
+    h1.cmd('echo 2 > /proc/sys/net/ipv4/conf/h1-eth0/force_igmp_version')
+    h2.cmd('echo 2 > /proc/sys/net/ipv4/conf/h2-eth0/force_igmp_version')
+    h3.cmd('echo 2 > /proc/sys/net/ipv4/conf/h3-eth0/force_igmp_version')
+    h4.cmd('echo 2 > /proc/sys/net/ipv4/conf/h4-eth0/force_igmp_version')
     # h5.cmd('echo 2 > /proc/sys/net/ipv4/conf/h5-eth0/force_igmp_version')
     # h6.cmd('echo 2 > /proc/sys/net/ipv4/conf/h6-eth0/force_igmp_version')
 
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     h1.cmd('ip route add default via 192.168.1.1')
     h2.cmd('ip route add default via 192.168.1.1')
     h3.cmd('ip route add default via 192.168.1.1')
-    #h4.cmd('ip route add default via 192.168.1.1')
+    h4.cmd('ip route add default via 192.168.1.1')
     #h5.cmd('ip route add default via 192.168.1.1')
     #h6.cmd('ip route add default via 192.168.1.1')
 
