@@ -38,7 +38,7 @@ class Capa2(app_manager.RyuApp):
         'DEFINO SWITCH DE LA TOPOLOGIA COMO QUERIER'
         self._snoop = kwargs['igmplib']
         self._snoop.set_querier_mode(
-            dpid=str_to_dpid('0000000000000002'), server_port=2)
+            dpid=str_to_dpid('0000000000000002'), server_port=1)
 
         'Obtengo grupos multicast generados por el protocolo IGMP'
         self.gruposM = self._snoop._snooper._to_hosts
@@ -111,9 +111,7 @@ class Capa2(app_manager.RyuApp):
                     self.ip_to_port[dpid][srcip] = in_port
                     print(self.gruposM)
 
-                    if protocol != in_proto.IPPROTO_IGMP:
-                        print('NO ES IGMP')
-                        self.manage_Multicast(datapath, dstip)
+                    self.manage_Multicast(datapath, dstip)
 
             else:
                 print('MULTICAST NO CAPA 3')
@@ -272,8 +270,10 @@ class Capa2(app_manager.RyuApp):
         parser = datapath.ofproto_parser
         dpid = datapath.id
         existe = False
+        print('GRUPOS MULTICAST {}'.format(self.gruposM))
+        print('ID DE SWITCH: {}'.format(dpid))
 
-        if destino in self.gruposM[dpid]:
+        if (self.gruposM) and (destino in self.gruposM[dpid]):
 
             if destino in self.lista_grupos:
                 existe = True
@@ -333,11 +333,8 @@ class Capa2(app_manager.RyuApp):
         puertosOUT = []
         puertos = self.getGroupPorts(destino, dpid)
         #print(puertos)
-        for puerto, p_info in puertos.items():
-            if p_info['in'] == True:
-                puertosOUT.append(puerto)
-            #elif p_info['in'] ==True:
-            #    puertosIN.append(puerto)
+        for puerto in puertos:
+            puertosOUT.append(puerto)
         return puertosOUT
 
 
@@ -423,9 +420,3 @@ class Capa2(app_manager.RyuApp):
         print (ip_mcast)
         self.quitar_direccion_grupo(ip_mcast)
         #TODO: agregar borrado de openflow
-
-
-    def aux(self):
-        for dpath_id_aux in self.gruposM:
-            for grupo_existente in self.gruposM[dpath_id_aux]:
-                self.unir_direccion_grupo(grupo_existente)
