@@ -59,7 +59,7 @@ if __name__ == '__main__':
     h1.cmd('ip route add default via 192.168.1.1')
     h2.cmd('ip route add default via 192.168.1.1')
     h3.cmd('ip route add default via 192.168.1.1')
-    h4.cmd('ip route add default via 172.16.1.1')
+    h4.cmd('ip route add default via 192.168.1.1')
     #h5.cmd('ip route add default via 172.16.1.1')
     #h6.cmd('ip route add default via 172.16.1.1')
 
