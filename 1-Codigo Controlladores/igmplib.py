@@ -54,7 +54,7 @@ class EventMulticastGroupStateChanged(event.EventBase):
     """a event class that notifies the changes of the statuses of the
     multicast groups."""
 
-    def __init__(self, reason, address, src, dsts, datapath):
+    def __init__(self, reason, address, src, dsts, datapath, group_id):
         """
         ========= =====================================================
         Attribute Description
@@ -71,6 +71,7 @@ class EventMulticastGroupStateChanged(event.EventBase):
         self.src = src
         self.dsts = dsts
         self.datapath = datapath
+        self.group_id = group_id
 
 
 class IgmpLib(app_manager.RyuApp):
@@ -468,7 +469,8 @@ class IgmpSnooper(IgmpBase):
         self.name = "IgmpSnooper"
         self.logger = logging.getLogger(self.name)
         self._send_event = send_event
-
+        self.groupID = 0
+        self.listaDirecciones = []
         # the structure of self._to_querier
         #
         # +------+--------------+
@@ -539,6 +541,11 @@ class IgmpSnooper(IgmpBase):
             self._do_query(req_igmp, req_ipv4, req_eth, in_port, msg)
         elif (igmp.IGMP_TYPE_REPORT_V1 == req_igmp.msgtype or
               igmp.IGMP_TYPE_REPORT_V2 == req_igmp.msgtype):
+
+            if req_igmp.address not in self.listaDirecciones:
+                self.listaDirecciones.append(req_igmp.address)
+                self.groupID = self.groupID + 1
+
             self.logger.info(log + "[REPORT]")
             self._do_report(req_igmp, in_port, msg)
         elif igmp.IGMP_TYPE_LEAVE == req_igmp.msgtype:
@@ -616,12 +623,13 @@ class IgmpSnooper(IgmpBase):
         # send a event when the multicast group address is new.
         self._to_hosts.setdefault(dpid, {})
         if not self._to_hosts[dpid].get(report.address):
+            #self.groupID = self.groupID + 1
             self._send_event(
                 EventMulticastGroupStateChanged(
-                    MG_GROUP_ADDED, report.address, outport, [], datapath))
+                    MG_GROUP_ADDED, report.address, outport, [], datapath, self.groupID))
             self._to_hosts[dpid].setdefault(
                 report.address,
-                {'replied': False, 'leave': None, 'ports': {}})
+                {'replied': False, 'leave': None, 'ports': {}, 'group_id': self.groupID})
 
         # set a flow entry from a host to the controller when
         # a host sent a REPORT message.
@@ -653,7 +661,7 @@ class IgmpSnooper(IgmpBase):
                 ports.append(port)
             self._send_event(
                 EventMulticastGroupStateChanged(
-                    MG_MEMBER_CHANGED, report.address, outport, ports, datapath))
+                    MG_MEMBER_CHANGED, report.address, outport, ports, datapath, self.groupID))
             self._set_flow_entry(
                 datapath, actions, outport, report.address)
             self._to_hosts[dpid][report.address]['ports'][
@@ -692,7 +700,7 @@ class IgmpSnooper(IgmpBase):
         timeout = igmp.LAST_MEMBER_QUERY_INTERVAL
         res_igmp = igmp.igmp(
             msgtype=igmp.IGMP_TYPE_QUERY,
-            maxresp=timeout * 10,
+            maxresp=timeout * 5,
             csum=0,
             address=leave.address)
         res_ipv4 = ipv4.ipv4(
@@ -769,7 +777,7 @@ class IgmpSnooper(IgmpBase):
         if len(actions):
             self._send_event(
                 EventMulticastGroupStateChanged(
-                    MG_MEMBER_CHANGED, dst, outport, ports, datapath))
+                    MG_MEMBER_CHANGED, dst, outport, ports, datapath, self.groupID))
             self._set_flow_entry(
                 datapath, actions, outport, dst)
             self._to_hosts[dpid][dst]['leave'] = None
@@ -786,7 +794,7 @@ class IgmpSnooper(IgmpBase):
 
         self._send_event(
             EventMulticastGroupStateChanged(
-                MG_GROUP_REMOVED, dst, outport, [], datapath))
+                MG_GROUP_REMOVED, dst, outport, [], datapath, self.groupID))
         self._del_flow_entry(datapath, outport, dst)
         for port in self._to_hosts[dpid][dst]['ports']:
             self._del_flow_entry(datapath, port, dst)
