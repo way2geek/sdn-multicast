@@ -1,3 +1,15 @@
+# DESCRIPCION
+#   Querier = s2
+#               |----h1
+#   s2----s1----|----h2
+#               .
+#               .
+#               |----h10
+#
+#
+#   Red: 192.168.1.0 / 24
+
+
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.node import Controller, RemoteController, OVSController
