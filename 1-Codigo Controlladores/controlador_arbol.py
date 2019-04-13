@@ -399,7 +399,7 @@ class Controlador(app_manager.RyuApp):
 
     def obtenerRed(self):
 
-        filejson = open("/home/bruno/Escritorio/RESPALDO TESIS/topoTree.json")
+        filejson = open("../2-Topologias/json/topoTree_con_host_en_medio.json")
         topojson = json.load(filejson)
 
         self.conexion_switches = topojson['switches']
