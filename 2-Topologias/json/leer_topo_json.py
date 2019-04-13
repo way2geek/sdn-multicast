@@ -9,8 +9,8 @@ def net():
     net = Mininet()
 
     # read topology file
-    #TODO: este campo podria pasarse como parametro al ejecutar el script
-    filejson = open("/home/bruno/Escritorio/sdn-multicast-version2/2-Topologias/json/topoTree.json")
+
+    filejson = open("/home/bruno/Escritorio/RESPALDO TESIS/topoTree.json")
     topojson = json.load(filejson)
 
     # create topology
@@ -44,6 +44,19 @@ def net():
     # add controller and start network
     net.addController(controller=RemoteController, port=6633)
     net.start()
+
+
+    for aux in topojson['hosts']:
+        host = net.get(aux)
+        host.cmd('echo 2 > /proc/sys/net/ipv4/conf/{}-eth1/force_igmp_version'.format(aux))
+        host.cmd('ip route add default via 10.0.0.1')
+
+
+    for aux in topojson['switches']:
+        switch = net.get(aux)
+        switch.cmd('ovs-vsctl set Bridge {} protocols=OpenFlow13'.format(aux))
+
+
     CLI(net)
     net.stop()
 
