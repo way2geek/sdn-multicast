@@ -700,7 +700,7 @@ class IgmpSnooper(IgmpBase):
         timeout = igmp.LAST_MEMBER_QUERY_INTERVAL
         res_igmp = igmp.igmp(
             msgtype=igmp.IGMP_TYPE_QUERY,
-            maxresp=timeout * 5,
+            maxresp=timeout * 10,
             csum=0,
             address=leave.address)
         res_ipv4 = ipv4.ipv4(

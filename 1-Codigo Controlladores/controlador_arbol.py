@@ -25,6 +25,7 @@ TABLE_1 = 0
 TABLE_2 = 10
 TABLE_3 = 20
 
+RUTA_TOPOLOGIA_JSON = "..//2-Topologias/json/topoTree_profundo.json"
 
 class Controlador(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -399,7 +400,7 @@ class Controlador(app_manager.RyuApp):
 
     def obtenerRed(self):
 
-        filejson = open("../2-Topologias/json/topoTree_con_host_en_medio.json")
+        filejson = open(RUTA_TOPOLOGIA_JSON)
         topojson = json.load(filejson)
 
         self.conexion_switches = topojson['switches']
