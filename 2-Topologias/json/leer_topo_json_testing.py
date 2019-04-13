@@ -5,7 +5,7 @@ from mininet.cli import CLI
 from mininet.node import OVSSwitch, RemoteController
 import json
 
-RUTA_TOPOLOGIA_JSON = "topoTree_profundo.json"
+RUTA_TOPOLOGIA_JSON = "topoTree_profundo_todos_acceso.json"
 
 def net():
     net = Mininet()
