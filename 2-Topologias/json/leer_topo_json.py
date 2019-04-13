@@ -10,7 +10,7 @@ def net():
 
     # read topology file
     #TODO: este campo podria pasarse como parametro al ejecutar el script
-    filejson = open("topologia_topo_learner1.json")
+    filejson = open("/home/bruno/Escritorio/sdn-multicast-version2/2-Topologias/json/topoTree.json")
     topojson = json.load(filejson)
 
     # create topology

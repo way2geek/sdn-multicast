@@ -11,6 +11,7 @@ from ryu.lib.packet import in_proto
 from ryu.lib.dpid import str_to_dpid
 from ryu.lib.packet import igmp
 import igmplib
+import json
 
 
 PRIORITY_MAX = 1000
@@ -23,25 +24,29 @@ TABLE_2 = 10
 TABLE_3 = 20
 
 
-class Capa2(app_manager.RyuApp):
+class Controlador(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     _CONTEXTS = {'igmplib': igmplib.IgmpLib}
 
     def __init__(self, *args, **kwargs):
-        super(Capa2, self).__init__(*args, **kwargs)
-        self.mac_to_port = {}
-        self.ip_to_port = {}
+        super(Controlador, self).__init__(*args, **kwargs)
 
         'DEFINO SWITCH DE LA TOPOLOGIA COMO QUERIER'
         self._snoop = kwargs['igmplib']
         self._snoop.set_querier_mode(
-            dpid=str_to_dpid('0000000000000001'), server_port=1)
+            dpid=str_to_dpid('0000000000000004'), server_port=1)
 
         'Obtengo grupos multicast generados por el protocolo IGMP'
         self.gruposM = self._snoop._snooper._to_hosts
 
+        'Datos de control para el controlador'
         self.groupID = 0
         self.lista_grupos = {}
+
+        'Datos de la topologia en la cual el controlador funciona'
+        self.conexion_switches = {}
+        self.conexion_hosts_switches = {}
+        self.dpids = {}
 
 
     '####EVENTOS####'
@@ -51,6 +56,20 @@ class Capa2(app_manager.RyuApp):
         datapath = ev.msg.datapath
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
+        dpid = datapath.id
+
+        self.obtenerRed()
+        #self.obtenerConexiones(dpid)
+
+        if self.switch_acceso(dpid) == True:
+            puertos_to_switches = self.get_ports_to_switches(dpid)
+
+            for port in puertos_to_switches:
+
+                match = self.match(datapath)
+                actions = [parser.OFPActionOutput(port)]
+                instructions = [self.apply_actions(datapath, actions)]
+                self.add_flow(datapath, TABLE_3, PRIORITY_LOW, match, instructions)
 
         self.default_flows(datapath, parser, ofproto)
 
@@ -67,40 +86,30 @@ class Capa2(app_manager.RyuApp):
         datapath = msg.datapath
         parser = datapath.ofproto_parser
         dpid = datapath.id
-        in_port = ev.msg.match['in_port']
+        puertos_to_switches = []
 
         # Parse the packet
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
-        req_igmp = pkt.get_protocol(igmp.igmp)
         destino = eth.dst
-        origen = eth.src
 
-        self.mac_to_port.setdefault(dpid, {})
-        self.ip_to_port.setdefault(dpid, {})
-        self.mac_to_port[dpid][origen] = in_port
+    #    if self.esMulticast(destino):
+    #        if eth.ethertype == ether_types.ETH_TYPE_IP:
+    #                ip = pkt.get_protocol(ipv4.ipv4)
+    #                srcip = ip.src
+    #                dstip = ip.dst
+    #                protocol = ip.proto
 
-        if self.esMulticast(destino):
-            if eth.ethertype == ether_types.ETH_TYPE_IP:
-                    ip = pkt.get_protocol(ipv4.ipv4)
-                    srcip = ip.src
-                    dstip = ip.dst
-                    protocol = ip.proto
-                    self.ip_to_port[dpid][srcip] = in_port
-
-                    if protocol != in_proto.IPPROTO_IGMP:
+    #                if protocol != in_proto.IPPROTO_IGMP:
                         #print('NO ES IGMP')
-                        match = self.match(datapath)
+    #    match = self.match(datapath)
 
-                        if dpid == 3:
-                            actions = [parser.OFPActionOutput(9)]
-                            instructions = [self.apply_actions(datapath, actions)]
-                            self.add_flow(datapath, TABLE_3, PRIORITY_LOW, match, instructions)
-
-                        elif dpid == 4:
-                            actions = [parser.OFPActionOutput(9)]
-                            instructions = [self.apply_actions(datapath, actions)]
-                            self.add_flow(datapath, TABLE_3, PRIORITY_LOW, match, instructions)
+        # if self.switch_acceso(dpid) == True:
+        #     puertos_to_switches = self.get_ports_to_switches(dpid)
+        #     for port in puertos_to_switches:
+        #         actions = [parser.OFPActionOutput(port)]
+        #         instructions = [self.apply_actions(datapath, actions)]
+        #         self.add_flow(datapath, TABLE_3, PRIORITY_LOW, match, instructions)
 
 
     @set_ev_cls(igmplib.EventMulticastGroupStateChanged, MAIN_DISPATCHER)
@@ -150,6 +159,7 @@ class Capa2(app_manager.RyuApp):
 
 
     '''####FUNCIONES####'''
+
     def send_msgs(self, dp, msgs):
         "Send all the messages provided to the datapath"
         for msg in msgs:
@@ -377,8 +387,51 @@ class Capa2(app_manager.RyuApp):
     #funcion para eliminar las rutas para un grupo multicast
     #que ya no se utilice
     def eliminar_flow_mcast(self, datapath, TABLE_ID, ip_mcast, group_id, dpid):
+
         print("Elimino grupo multicast {} del switch {}".format(group_id, dpid))
         print(self.lista_grupos)
         self.quitar_direccion_grupo(ip_mcast, dpid)
         print(self.lista_grupos)
         self.flowdel(datapath, TABLE_ID, ip_mcast, group_id)
+
+
+    def obtenerRed(self):
+
+        filejson = open("/home/bruno/Escritorio/sdn-multicast-version2/2-Topologias/json/topoLinear.json")
+        topojson = json.load(filejson)
+
+        self.conexion_switches = topojson['switches']
+        self.conexion_hosts_switches = topojson['hosts']
+        self.dpids = topojson['dpids']
+
+
+    def get_ports_to_switches(self, dpid):
+
+        aux = []
+        for switch in self.conexion_switches:
+            print('SWITCH: {}'.format(switch))
+
+            if self.dpids.get(switch) == None:
+                print('ERROR')
+            else:
+                if dpid == self.dpids[switch]:
+                    aux = self.conexion_switches[switch].values()
+                    print(aux)
+        return aux
+
+
+    def switch_acceso(self, dpid):
+        aux = False
+        for switch in self.conexion_switches:
+            print('VOY A TRABAJAR {}'.format(switch))
+            if dpid == self.dpids[switch]:
+
+                for host in self.conexion_hosts_switches:
+                    if switch == self.conexion_hosts_switches[host]['switch']:
+                        print('SWITCH {} ES DE ACCESO TIENE CONECTADO EL HOST {}'.format(switch, host))
+                        aux = True
+                    else:
+                        aux = False
+            else:
+                print('NO COINCIDIERON LOS DPID')
+        return aux
