@@ -1,4 +1,3 @@
-
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.node import Controller, RemoteController, OVSController
@@ -27,15 +26,15 @@ class Topologia(Topo):
         h6 = self.addHost('h6', mac="00:00:00:00:11:16", ip="192.168.1.16/24")
 
         info( '*** Adding links\n')
-        self.addLink(s1, s2, 5, 1)
-        self.addLink(s1, s3, 8, 9)
+        self.addLink(s1, s2, 24, 24)
+        self.addLink(s1, s3, 23, 23)
 
-        self.addLink(h1, s3, 1, 1)
-        self.addLink(h2, s3, 1, 2)
-        self.addLink(h3, s3, 1, 3)
-        self.addLink(h4, s1, 1, 4)
-        self.addLink(h5, s1, 1, 2)
-        self.addLink(h6, s1, 1, 3)
+        self.addLink(h1, s2, 1, 1)
+        self.addLink(h2, s2, 1, 2)
+        self.addLink(h3, s2, 1, 3)
+        self.addLink(h4, s3, 1, 1)
+        self.addLink(h5, s3, 1, 2)
+        self.addLink(h6, s3, 1, 3)
 
 if __name__ == '__main__':
     setLogLevel('info')
@@ -74,6 +73,7 @@ if __name__ == '__main__':
 
     #Establezco la version OPenFlow1.3 en los switches
     s1.cmd('ovs-vsctl set Bridge s1 protocols=OpenFlow13')
-    s3.cmd('ovs-vsctl set Bridge s2 protocols=OpenFlow13')
-    s2.cmd('ovs-vsctl set Bridge s3 protocols=OpenFlow13')
+    s2.cmd('ovs-vsctl set Bridge s2 protocols=OpenFlow13')
+    s3.cmd('ovs-vsctl set Bridge s3 protocols=OpenFlow13')
+
     CLI(net)

@@ -38,7 +38,7 @@ class Capa2(app_manager.RyuApp):
         'DEFINO SWITCH DE LA TOPOLOGIA COMO QUERIER'
         self._snoop = kwargs['igmplib']
         self._snoop.set_querier_mode(
-            dpid=str_to_dpid('0000000000000002'), server_port=1)
+            dpid=str_to_dpid('0000000000000001'), server_port=1)
 
         'Obtengo grupos multicast generados por el protocolo IGMP'
         self.gruposM = self._snoop._snooper._to_hosts
@@ -55,9 +55,19 @@ class Capa2(app_manager.RyuApp):
         datapath = ev.msg.datapath
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
-
         self.default_flows(datapath, parser, ofproto)
 
+        # switch s1
+        if datapath.id == 1:
+            # add group tables
+            self.add_group_flow(datapath,50,ofproto.OFPGC_ADD,ofproto.OFPGT_ALL)
+            actions = [parser.OFPActionGroup(group_id=50)]
+            match = parser.OFPMatch(in_port=24)
+            self.add_flow(datapath, 22, match, actions)
+            
+            actions = [parser.OFPActionGroup(group_id=51)]
+            match = parser.OFPMatch(in_port=23)
+            self.add_flow(datapath, 22, match, actions)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):

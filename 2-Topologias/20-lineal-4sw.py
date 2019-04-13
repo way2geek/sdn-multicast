@@ -1,3 +1,13 @@
+# DESCRIPCION
+#   Querier = s1
+#
+#               s1----s2-------s3------s4--------s5
+#                      |        |       |        |
+#                   h1 h2    h3 h4    h5 h6    h7 h8
+#
+#   Red: 192.168.1.0 / 24
+
+
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.node import Controller, RemoteController, OVSController
@@ -28,6 +38,9 @@ class Topologia(Topo):
         info( '*** Adding switches\n')
         s1 = self.addSwitch('s1')
         s2 = self.addSwitch('s2')
+        s3 = self.addSwitch('s3')
+        s4 = self.addSwitch('s4')
+
 
         info( '*** Adding hosts\n')
         h1 = self.addHost('h1', mac="00:00:00:00:11:11", ip="192.168.1.11/24", defaultRoute= '192.168.1.1')
@@ -36,23 +49,18 @@ class Topologia(Topo):
         h4 = self.addHost('h4', mac="00:00:00:00:11:14", ip="192.168.1.14/24", defaultRoute= '192.168.1.1')
         h5 = self.addHost('h5', mac="00:00:00:00:11:15", ip="192.168.1.15/24", defaultRoute= '192.168.1.1')
         h6 = self.addHost('h6', mac="00:00:00:00:11:16", ip="192.168.1.16/24", defaultRoute= '192.168.1.1')
-        h7 = self.addHost('h7', mac="00:00:00:00:11:17", ip="192.168.1.17/24", defaultRoute= '192.168.1.1')
-        h8 = self.addHost('h8', mac="00:00:00:00:11:18", ip="192.168.1.18/24", defaultRoute= '192.168.1.1')
-        h9 = self.addHost('h9', mac="00:00:00:00:11:19", ip="192.168.1.19/24", defaultRoute= '192.168.1.1')
-        h10 = self.addHost('h10', mac="00:00:00:00:11:20", ip="192.168.1.20/24", defaultRoute= '192.168.1.1')
 
         info( '*** Adding links\n')
-        self.addLink(s1, s2, 24, 1)
+        self.addLink(s1, s2, 24, 24)
+        self.addLink(s2, s3, 23, 23)
+        self.addLink(s3, s4, 22, 22)
+
         self.addLink(h1, s1, 1, 1)
         self.addLink(h2, s1, 1, 2)
-        self.addLink(h3, s1, 1, 3)
-        self.addLink(h4, s1, 1, 4)
-        self.addLink(h5, s1, 1, 5)
-        self.addLink(h6, s1, 1, 6)
-        self.addLink(h7, s1, 1, 7)
-        self.addLink(h8, s1, 1, 8)
-        self.addLink(h9, s1, 1, 9)
-        self.addLink(h10, s1, 1, 10)
+        self.addLink(h3, s2, 1, 3)
+        self.addLink(h4, s3, 1, 1)
+        self.addLink(h5, s3, 1, 2)
+        self.addLink(h6, s4, 1, 3)
 
 if __name__ == '__main__':
     setLogLevel('info')
@@ -68,10 +76,6 @@ if __name__ == '__main__':
     h4 = net.get('h4')
     h5 = net.get('h5')
     h6 = net.get('h6')
-    h7 = net.get('h7')
-    h8 = net.get('h8')
-    h9 = net.get('h9')
-    h10 = net.get('h10')
 
     #Fuerzo version de IGMP
     h1.cmd('echo 2 > /proc/sys/net/ipv4/conf/h1-eth0/force_igmp_version')
@@ -80,10 +84,6 @@ if __name__ == '__main__':
     h4.cmd('echo 2 > /proc/sys/net/ipv4/conf/h4-eth0/force_igmp_version')
     h5.cmd('echo 2 > /proc/sys/net/ipv4/conf/h5-eth0/force_igmp_version')
     h6.cmd('echo 2 > /proc/sys/net/ipv4/conf/h6-eth0/force_igmp_version')
-    h7.cmd('echo 2 > /proc/sys/net/ipv4/conf/h7-eth0/force_igmp_version')
-    h8.cmd('echo 2 > /proc/sys/net/ipv4/conf/h8-eth0/force_igmp_version')
-    h9.cmd('echo 2 > /proc/sys/net/ipv4/conf/h9-eth0/force_igmp_version')
-    h10.cmd('echo 2 > /proc/sys/net/ipv4/conf/h10-eth0/force_igmp_version')
 
     #Establezco la ruta por defecto a los hosts
     h1.cmd('ip route add default via 192.168.1.1')
@@ -92,57 +92,18 @@ if __name__ == '__main__':
     h4.cmd('ip route add default via 192.168.1.1')
     h5.cmd('ip route add default via 192.168.1.1')
     h6.cmd('ip route add default via 192.168.1.1')
-    h7.cmd('ip route add default via 192.168.1.1')
-    h8.cmd('ip route add default via 192.168.1.1')
-    h9.cmd('ip route add default via 192.168.1.1')
-    h10.cmd('ip route add default via 192.168.1.1')
+
 
     #COMANDOS A SWITCHES
     s1 = net.get('s1')
     s2 = net.get('s2')
+    s3 = net.get('s3')
+    s4 = net.get('s4')
 
     #Establezco la version OPenFlow1.3 en los switches
     s1.cmd('ovs-vsctl set Bridge s1 protocols=OpenFlow13')
     s2.cmd('ovs-vsctl set Bridge s2 protocols=OpenFlow13')
-
-    #Ejecuto escucha
-    time.sleep(TIEMPO_PRIMERA_SUSCRIPCION)
-    print "empieza a escuchar..."
-    local_time = time.ctime(time.time())
-    print ("Local time:", local_time)
-    for host in net.hosts:
-        host.cmd('vlc udp://@225.0.0.1 &')
-        time.sleep(TIEMPO_ENTRE_SUSCRIPCIONES)
-
-    print "fin escuchas..."
-    local_time = time.ctime(time.time())
-    print ("Local time:", local_time)
-
-    # Ejecuto streaming
-    time.sleep(TIEMPO_COMIENZO_STREAMING)
-    print "Voy a hacer streaming"
-    local_time = time.ctime(time.time())
-    print ("Local time:", local_time)
-    h10.cmd('vlc videoplayback.mp4 --sout udp:225.0.0.1 --loop &')
-
-
-    #Desuscripciones
-    time.sleep(TIEMPO_PRIMERA_DESUSCRIPCION)
-    print "Voy a desuscribirme"
-    local_time = time.ctime(time.time())
-    print ("Local time:", local_time)
-    for host in net.hosts:
-        host.cmd('pkill vlc')
-        time.sleep(TIEMPO_ENTRE_DESUSCRIPCIONES)
-
-    print "Fin desuscripciones..."
-    local_time = time.ctime(time.time())
-    print ("Local time:", local_time)
-
-    time.sleep(TIEMPO_FIN_STREAMING)
-    print "finalizando streaming"
-    local_time = time.ctime(time.time())
-    print ("Local time:", local_time)
-    h10.cmd('pkill vlc')
+    s3.cmd('ovs-vsctl set Bridge s3 protocols=OpenFlow13')
+    s4.cmd('ovs-vsctl set Bridge s4 protocols=OpenFlow13')
 
     CLI(net)

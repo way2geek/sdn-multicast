@@ -1,3 +1,6 @@
+#Crea y borra grupos
+#Funciona de a 1 grupo Mcast
+
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
@@ -42,6 +45,7 @@ class Capa2(app_manager.RyuApp):
 
         self.groupID = 0
         self.lista_grupos = {}
+        self.puertos_grupo = {}
 
 
     '####EVENTOS####'
@@ -79,61 +83,59 @@ class Capa2(app_manager.RyuApp):
         self.ip_to_port.setdefault(dpid, {})
         self.mac_to_port[dpid][origen] = in_port
 
+        #if self.esMulticast(destino):
         if self.esMulticast(destino):
+            # print('HAY TRAFICO MULTICAST')
             if eth.ethertype == ether_types.ETH_TYPE_IP:
                     ip = pkt.get_protocol(ipv4.ipv4)
                     srcip = ip.src
                     dstip = ip.dst
                     protocol = ip.proto
                     self.ip_to_port[dpid][srcip] = in_port
+                    existe = False
+                    # print(self.gruposM)
 
 
     @set_ev_cls(igmplib.EventMulticastGroupStateChanged, MAIN_DISPATCHER)
     def _status_changed(self, ev):
         ofproto = ev.datapath.ofproto
         dpid = ev.datapath.id
-
+        print(self.gruposM)
         msg = {
             igmplib.MG_GROUP_ADDED: 'Multicast Group Added',
             igmplib.MG_MEMBER_CHANGED: 'Multicast Group Member Changed',
             igmplib.MG_GROUP_REMOVED: 'Multicast Group Removed',
         }
 
-        self.logger.info("%s: [%s] querier:[%s] hosts:%s switch:%s group_id:%s",
+        self.logger.info("%s: [%s] querier:[%s] hosts:%s switch:%s",
                          msg.get(ev.reason), ev.address, ev.src,
-                         ev.dsts, dpid, ev.group_id)
-        print('\n')
-        print('Los grupos multicast son {}'.format(self.gruposM))
-        print('\n')
-
+                         ev.dsts, dpid)
 
 
         if ev.reason == igmplib.MG_GROUP_ADDED:
 
-            #self.obtenerGroupID()
-            #self.agregarGrupo(self.lista_grupos, ev.address, self.groupID, dpid)
-            group_id = self.gruposM[dpid][ev.address]['group_id']
-            self.unir_direccion_grupo(ev.address, group_id, dpid)
+            self.obtenerGroupID()
+            self.unir_direccion_grupo(ev.address)
+            group_id = self.lista_grupos[ev.address]
             print('SE AGREGO EL GRUPO {}'.format(group_id))
             self.add_group_flow(ev.datapath, group_id, ofproto.OFPGC_ADD, ofproto.OFPGT_ALL)
             self.add_flow_to_group(ev.datapath, ev.address, group_id)
 
         elif ev.reason == igmplib.MG_MEMBER_CHANGED:
 
-            group_id = self.lista_grupos[dpid][ev.address]
+            group_id = self.lista_grupos[ev.address]
+            print('SE AGREGO UN INTEGRANTE AL GRUPO {}'.format(group_id))
             puertos = self.getGroupOutPorts(ev.address, dpid)
-            print('LOS PUERTOS DEL GRUPO {} EN EL SWITCH {} SON {}'.format(ev.address, dpid, puertos))
             buckets = self.generoBuckets(ev.datapath, puertos)
             self.add_group_flow(ev.datapath, group_id, ofproto.OFPGC_MODIFY, ofproto.OFPGT_ALL, buckets)
-            print('SE MODIFICO EL GRUPO {} EN EL SWITCH {}'.format(group_id, dpid))
 
         elif ev.reason == igmplib.MG_GROUP_REMOVED:
 
-            group_id = self.lista_grupos[dpid][ev.address]
+            group_id = self.lista_grupos[ev.address]
             puertos = self.getGroupOutPorts(ev.address, dpid)
             buckets = self.generoBuckets(ev.datapath, puertos)
             self.add_group_flow(ev.datapath, group_id, ofproto.OFPGC_DELETE, ofproto.OFPGT_ALL, buckets)
-            self.eliminar_flow_mcast(ev.datapath, TABLE_3, ev.address, group_id, dpid)
+            self.eliminar_flow_mcast(ev.datapath, TABLE_3, ev.address, group_id)
 
 
 
@@ -250,7 +252,7 @@ class Capa2(app_manager.RyuApp):
         instructions = [self.apply_actions(datapath, actions)]
 
         print('AGREGO FLUJO A GROUP TABLE {}'.format(group_id))
-        self.add_flow(datapath, TABLE_3, PRIORITY_MAX, match, instructions)
+        self.add_flow(datapath, TABLE_3, PRIORITY_MID, match, instructions)
 
 
     def flowdel(self, datapath, table_id, destino, out_group, priority=None):
@@ -266,6 +268,43 @@ class Capa2(app_manager.RyuApp):
                             command=ofproto.OFPFC_DELETE,
                             match=match,
                             out_group=out_group)
+
+
+    def manage_Multicast(self, datapath, destino, in_port):
+        'Se recibe paquete con destino multicast y se encamina.'
+
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        dpid = datapath.id
+        existe = False
+        #group_id = None
+
+        if destino in self.lista_grupos:
+            existe = True
+            group_id = self.lista_grupos[destino]
+            print(group_id)
+
+        else:
+            self.obtenerGroupID()
+            self.unir_direccion_grupo(destino)
+            group_id = self.lista_grupos[destino]
+
+        puertos = self.getGroupOutPorts(destino, dpid)
+        buckets = self.generoBuckets(datapath, puertos)
+
+        print('Los puertos son {}'.format(puertos))
+
+        if existe == True:
+            print('MODIFICO GRUPO')
+            if in_port not in puertos:
+                #self.add_group_flow(datapath, group_id, ofproto.OFPGC_DELETE, ofproto.OFPGT_ALL, buckets)
+                self.add_group_flow(datapath, group_id, ofproto.OFPGC_MODIFY, ofproto.OFPGT_ALL, buckets)
+            else:
+                pass
+        else:
+            print('SE AGREGA GRUPO')
+            self.add_group_flow(datapath, group_id, ofproto.OFPGC_ADD, ofproto.OFPGT_ALL)
+            self.add_flow_to_group(datapath, destino, group_id)
 
 
     def getGroupPorts(self, destino, dpid):
@@ -336,7 +375,7 @@ class Capa2(app_manager.RyuApp):
         #DROPS
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_LLDP)))
 
-        # Drop STP BPDU
+        # Drop STDP BPDU
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_dst='01:80:c2:00:00:00')))
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_dst='01:00:0c:cc:cc:cd')))
 
@@ -346,6 +385,14 @@ class Capa2(app_manager.RyuApp):
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_IPV6)))
 
         self.send_msgs(datapath, msgs)
+
+
+    def delete_group(self, group_id):
+        pass
+
+
+    def delete_flow_to_group(self, address, group_id):
+        pass
 
 
     def obtenerGroupID(self):
@@ -359,25 +406,28 @@ class Capa2(app_manager.RyuApp):
         #return self.groupID
 
 
-    def quitar_direccion_grupo(self, ip_mcast, dpid):
+    def quitar_direccion_grupo(self, ip_mcast):
         #Elimina del diccionario grupo multicast
         print "saque IP:"
-        self.lista_grupos[dpid].pop(ip_mcast)
+        self.lista_grupos.pop(ip_mcast)
 
 
-    def unir_direccion_grupo(self, ip_mcast, group_id, dpid):
-    #   print "Agregue IP NUEVA:"
-    #    print (ip_mcast)
-        self.lista_grupos.setdefault(dpid, {})
-        if ip_mcast not in self.lista_grupos[dpid]:
-            self.lista_grupos[dpid].update({ip_mcast:group_id})
+    def unir_direccion_puertos(self, direccion, puertos):
+        self.lista_puertos.update({direccion:puertos})
+
+
+    def unir_direccion_grupo(self, ip_mcast):
+        print "Agregue IP NUEVA:"
+        print (ip_mcast)
+        #Almacenar en diccionario relacion IP:group ID
+        self.lista_grupos.update({ip_mcast:self.groupID})
 
 
     #funcion para eliminar las rutas para un grupo multicast
     #que ya no se utilice
-    def eliminar_flow_mcast(self, datapath, TABLE_ID, ip_mcast, group_id, dpid):
+    def eliminar_flow_mcast(self, datapath, TABLE_ID, ip_mcast, group_id):
         print "elimino grupo multicast"
         print(self.lista_grupos)
-        self.quitar_direccion_grupo(ip_mcast, dpid)
+        self.quitar_direccion_grupo(ip_mcast)
         print(self.lista_grupos)
         self.flowdel(datapath, TABLE_ID, ip_mcast, group_id)
