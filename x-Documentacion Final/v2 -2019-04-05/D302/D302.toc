@@ -1,3 +1,4 @@
+\babel@toc {spanish}{}
 \contentsline {chapter}{\numberline {1}Introducci\IeC {\'o}n}{8}{chapter.1}
 \contentsline {section}{\numberline {1.1}Ejemplo de Secci\IeC {\'o}n}{9}{section.1.1}
 \contentsline {section}{\numberline {1.2}Otra secci\IeC {\'o}n}{9}{section.1.2}
@@ -8,8 +9,8 @@
 \contentsline {section}{\numberline {2.1}Otra Secci\IeC {\'o}n}{11}{section.2.1}
 \contentsline {subsection}{\numberline {2.1.1}Otra Subsecci\IeC {\'o}n}{11}{subsection.2.1.1}
 \contentsline {chapter}{\numberline {3}Conclusiones}{13}{chapter.3}
-\contentsline {chapter}{\numberline {4}Bibliography}{15}{chapter.4}
-\contentsline {chapter}{\numberline {A}Nombre del Ap\IeC {\'e}ndice 1}{16}{appendix.A}
-\contentsline {section}{\numberline {A.1}Una Secci\IeC {\'o}n}{16}{section.A.1}
-\contentsline {subsection}{\numberline {A.1.1}Una Subsecci\IeC {\'o}n}{17}{subsection.A.1.1}
-\contentsline {chapter}{\numberline {B}Nombre del Ap\IeC {\'e}ndice 2}{18}{appendix.B}
+\contentsline {chapter}{\numberline {4}Bibliograf\'{\i }a}{15}{chapter.4}
+\contentsline {chapter}{\numberline {A}Nombre del Ap\IeC {\'e}ndice 1}{16}{appendix.Alph1}
+\contentsline {section}{\numberline {A.1}Una Secci\IeC {\'o}n}{16}{section.Alph1.1}
+\contentsline {subsection}{\numberline {A.1.1}Una Subsecci\IeC {\'o}n}{17}{subsection.Alph1.1.1}
+\contentsline {chapter}{\numberline {B}Nombre del Ap\IeC {\'e}ndice 2}{18}{appendix.Alph2}
