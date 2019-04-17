@@ -25,7 +25,7 @@ TABLE_1 = 0
 TABLE_2 = 10
 TABLE_3 = 20
 
-RUTA_TOPOLOGIA_JSON = "..//2-Topologias/json/topoTree_profundo_todos_acceso.json"
+RUTA_TOPOLOGIA_JSON = "..//2-Topologias/json/topoLinear_5sw.json"
 
 class Controlador(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -64,12 +64,10 @@ class Controlador(app_manager.RyuApp):
         self.obtenerRed()
         #self.obtenerConexiones(dpid)
         puertos_to_switches = self.get_ports_to_switches(dpid)
-        
+
         print ('Los puertos conectados al switch {} son {}'.format(dpid, puertos_to_switches))
 
         if self.switch_acceso(dpid) == True:
-
-
             for port in puertos_to_switches:
 
                 match = self.match(datapath)
