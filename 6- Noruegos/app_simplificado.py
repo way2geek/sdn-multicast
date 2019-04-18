@@ -15,7 +15,7 @@ def load_json_topology ():
 	global hosts
 	global dpids
 
-	filejson = open("/home/bruno/Escritorio/sdn-multicast-version2/2-Topologias/json/topoTree_profundo_todos_acceso.json")
+	filejson = open("topo/topo1.json")
 	topojson = json.load(filejson)
 
 	switches = topojson['switches']
@@ -78,7 +78,7 @@ def build_sp_tree(source_host):
 			if destinated_switch not in tree_ports:
 				tree_ports[destinated_switch] = set()
 			tree_ports[destinated_switch].add(hosts[destinated_host]['port'])
-	print(tree_ports)
+	# print(tree_ports)
 
 
 def tree_ports_all():
@@ -100,9 +100,42 @@ def dump_sp():
 		print "sp[%s]: %s " % (switch, sp[switch])
 	print #newline
 
+def swiches_conectados_directamente(dpid_origen, dpid_destino):
+	estan_directamente_conectados = False
+	for switch_aux in switches:
+		if(switch_aux == dpid_origen):
+			if (dpid_origen == sp[switch_aux][dpid_destino]):
+				print "estan directamente conectado"
+				estan_directamente_conectados = True
+	return estan_directamente_conectados
+
+def determinar_puerto_salida(dpid_origen, dpid_destino):
+	puerto_salida = -1
+	# Caso switches contiguos
+	if(swiches_conectados_directamente(dpid_origen, dpid_destino)):
+		puerto_salida = switches[dpid_origen][dpid_destino]
+	# Caso mismo switch
+	elif(sp[dpid_origen][dpid_destino] == None):
+		print "Son el mismo switch"
+	# Caso switches separados
+	else:
+		while (puerto_salida == -1):
+			print "entre al while "
+			nuevo_destino = sp[dpid_origen][dpid_destino]
+			print "nuevo destino = "
+			print nuevo_destino
+			puerto_salida = determinar_puerto_salida(dpid_origen, nuevo_destino)
+	print ("fin de la funcion. El puerto de salida es {}").format(puerto_salida)
+	return puerto_salida
+
+def inicializar_diccionario_switches:
+	
 
 load_json_topology()
 shortest_paths_all()
 tree_ports_all()
 print('\n')
 dump_sp()
+
+print ("hola:")
+determinar_puerto_salida("s8","s1")
