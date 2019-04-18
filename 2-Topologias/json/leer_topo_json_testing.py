@@ -5,14 +5,14 @@ from mininet.cli import CLI
 from mininet.node import OVSSwitch, RemoteController
 import json
 
-RUTA_TOPOLOGIA_JSON = "topoLinear_5sw.json"
+NOMBRE_TOPO_JSON = "topoLinear_5sw.json"
 
 def net():
     net = Mininet()
 
     # read topology file
 
-    filejson = open(RUTA_TOPOLOGIA_JSON)
+    filejson = open(NOMBRE_TOPO_JSON)
     topojson = json.load(filejson)
 
     # create topology
