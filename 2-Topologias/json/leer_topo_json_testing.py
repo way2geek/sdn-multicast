@@ -1,21 +1,14 @@
-#idem archivo net.py Noruegos pero ajustado a lo nuestro
-
 from mininet.net import Mininet
 from mininet.cli import CLI
 from mininet.node import OVSSwitch, RemoteController
 import json
 
-RUTA_TOPOLOGIA_JSON = "topoTree_profundo_todos_acceso.json"
+NOMBRE_TOPO_JSON = "2-topo_linear_grande.json"
 
 def net():
     net = Mininet()
-
-    # read topology file
-
-    filejson = open(RUTA_TOPOLOGIA_JSON)
+    filejson = open(NOMBRE_TOPO_JSON)
     topojson = json.load(filejson)
-
-    # create topology
     link_exists = {}
 
     for switch_name in topojson['switches']:
@@ -25,20 +18,20 @@ def net():
     for host_name in topojson['hosts']:
         net.addHost(host_name, ip=topojson['hosts'][host_name]['ip'])
 
-    # connect switches
+    #conexion entre switches
     for swname in topojson['switches']:
         adjsw = topojson['switches'][swname]
         for adjswname in adjsw:
-            # links are bidirectional, error if added twice
+            # control de error por si se agrego un enlace repetido
             if adjswname not in link_exists[swname]:
                 local_if = adjsw[adjswname]
                 remote_if = topojson['switches'][adjswname][swname]
                 net.addLink(swname, adjswname, port1=local_if, port2=remote_if)
-                # mark both as created
+                # marcar como enlaces creados
                 link_exists[swname][adjswname] = True
                 link_exists[adjswname][swname] = True
 
-     # connect hosts and transcoders to switches
+     # conectar hosts a switches
     for host_name in topojson['hosts']:
          hostdata = topojson['hosts'][host_name]
          net.addLink(host_name, hostdata['switch'], port2=hostdata['port'])
@@ -51,7 +44,7 @@ def net():
     for aux in topojson['hosts']:
         host = net.get(aux)
         host.cmd('echo 2 > /proc/sys/net/ipv4/conf/{}-eth1/force_igmp_version'.format(aux))
-        host.cmd('ip route add default via 10.0.0.1')
+        host.cmd('ip route add default via 10.0.0.250')
 
 
     for aux in topojson['switches']:

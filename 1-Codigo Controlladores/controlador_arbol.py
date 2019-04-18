@@ -37,7 +37,7 @@ class Controlador(app_manager.RyuApp):
         'DEFINO SWITCH DE LA TOPOLOGIA COMO QUERIER'
         self._snoop = kwargs['igmplib']
         self._snoop.set_querier_mode(
-            dpid=str_to_dpid('0000000000000004'), server_port=1)
+            dpid=str_to_dpid('0000000000000001'), server_port=1)
 
         'Obtengo grupos multicast generados por el protocolo IGMP'
         self.gruposM = self._snoop._snooper._to_hosts
