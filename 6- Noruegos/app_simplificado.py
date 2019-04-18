@@ -15,7 +15,7 @@ def load_json_topology ():
 	global hosts
 	global dpids
 
-	filejson = open("topo/topo1.json")
+	filejson = open("../2-Topologias/json/4-topo_tree_profundo.json")
 	topojson = json.load(filejson)
 
 	switches = topojson['switches']
@@ -69,7 +69,7 @@ def build_sp_tree(source_host):
 				port = switches[parent][current]
 				if parent not in tree_ports:
 					tree_ports[parent] = set()
-					print(tree_ports)
+					# print(tree_ports)
 				tree_ports[parent].add(port)
 				done.add(current)
 				current = parent
@@ -140,6 +140,24 @@ def camino_por_puerto():
 				puertos_entre_switches[sw_aux][sw_aux2]=puerto_dic
 	return puertos_entre_switches
 
+def camino_entre_hosts ():
+	puertos_entre_hosts = {}
+	for host_aux_1 in hosts:
+		puertos_entre_hosts.setdefault(host_aux_1,{})
+		for host_aux_2 in hosts:
+			sw_host_aux_1 = hosts[host_aux_1]["switch"]
+			sw_host_aux_2 = hosts[host_aux_2]["switch"]
+			#host conectados al mismo switch
+			if (sw_host_aux_1 == sw_host_aux_2):
+				#tomo valor textual del json
+				puertos_entre_hosts[host_aux_1][host_aux_2] = hosts[host_aux_2]["port"]
+			#host conectados a diferentes switches
+			else:
+				# tomo valor igual al puerto de conexion entre esos switches
+				puertos_entre_hosts[host_aux_1][host_aux_2] = camino_por_puerto()[sw_host_aux_1][sw_host_aux_2]
+	return puertos_entre_hosts
+
+
 load_json_topology()
 shortest_paths_all()
 tree_ports_all()
@@ -150,5 +168,8 @@ dump_sp()
 # determinar_puerto_salida("s8","s1")
 
 puertos_entre_switches = camino_por_puerto()
-print "CAMINO : "
-print puertos_entre_switches["s5"]
+# print "CAMINO : "
+print puertos_entre_switches["s3"]
+
+puertos_entre_hosts = camino_entre_hosts()
+print puertos_entre_hosts["h5"]
