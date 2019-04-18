@@ -105,7 +105,7 @@ def swiches_conectados_directamente(dpid_origen, dpid_destino):
 	for switch_aux in switches:
 		if(switch_aux == dpid_origen):
 			if (dpid_origen == sp[switch_aux][dpid_destino]):
-				print "estan directamente conectado"
+				# print "estan directamente conectado"
 				estan_directamente_conectados = True
 	return estan_directamente_conectados
 
@@ -120,16 +120,25 @@ def determinar_puerto_salida(dpid_origen, dpid_destino):
 	# Caso switches separados
 	else:
 		while (puerto_salida == -1):
-			print "entre al while "
+			# print "entre al while "
 			nuevo_destino = sp[dpid_origen][dpid_destino]
-			print "nuevo destino = "
-			print nuevo_destino
+			# print "nuevo destino = "
+			# print nuevo_destino
 			puerto_salida = determinar_puerto_salida(dpid_origen, nuevo_destino)
-	print ("fin de la funcion. El puerto de salida es {}").format(puerto_salida)
+	# print ("fin de la funcion. El puerto de salida es {}").format(puerto_salida)
 	return puerto_salida
 
-def inicializar_diccionario_switches:
-	
+def camino_por_puerto():
+	puertos_entre_switches = {}
+	for sw_aux in switches:
+		puertos_entre_switches.setdefault(sw_aux,{})
+		for sw_aux2 in switches:
+			if (sw_aux == sw_aux2):
+					puertos_entre_switches[sw_aux][sw_aux2]=None
+			else:
+				puerto_dic = determinar_puerto_salida(sw_aux, sw_aux2)
+				puertos_entre_switches[sw_aux][sw_aux2]=puerto_dic
+	return puertos_entre_switches
 
 load_json_topology()
 shortest_paths_all()
@@ -137,5 +146,9 @@ tree_ports_all()
 print('\n')
 dump_sp()
 
-print ("hola:")
-determinar_puerto_salida("s8","s1")
+# print ("Prueba calculo de puerto de salida:")
+# determinar_puerto_salida("s8","s1")
+
+puertos_entre_switches = camino_por_puerto()
+print "CAMINO : "
+print puertos_entre_switches["s5"]
