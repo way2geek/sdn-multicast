@@ -1,5 +1,3 @@
-#correr con leer_topo_json.json que levanta topoTree.json que levanta
-
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
@@ -15,7 +13,6 @@ from ryu.lib.packet import igmp
 import igmplib
 import json
 
-
 PRIORITY_MAX = 1000
 PRIORITY_MID = 900
 PRIORITY_LOW = 800
@@ -25,7 +22,7 @@ TABLE_1 = 0
 TABLE_2 = 10
 TABLE_3 = 20
 
-RUTA_TOPOLOGIA_JSON = "..//2-Topologias/json/topoLinear_5sw.json"
+RUTA_TOPOLOGIA_JSON = "..//2-Topologias/json/2-topo_linear_grande.json"
 
 class Controlador(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -37,7 +34,7 @@ class Controlador(app_manager.RyuApp):
         'DEFINO SWITCH DE LA TOPOLOGIA COMO QUERIER'
         self._snoop = kwargs['igmplib']
         self._snoop.set_querier_mode(
-            dpid=str_to_dpid('0000000000000004'), server_port=1)
+            dpid=str_to_dpid('0000000000000001'), server_port=1)
 
         'Obtengo grupos multicast generados por el protocolo IGMP'
         self.gruposM = self._snoop._snooper._to_hosts
