@@ -5,7 +5,7 @@ switches = {}	# switches
 hosts = {}		# all hosts, including low-capacity hosts but not transcoders
 dpids = {}		# datapath id for each switch
 sp = {}			#shortest paths
-sp_tree = {}	#short path tree'
+
 ports = {}
 
 
@@ -51,40 +51,6 @@ def shortest_paths(origen):
 					switch_anterior[switch_aux] = switch_mas_cercano
 
 	return switch_anterior
-
-
-def build_sp_tree(source_host):
-	tree_ports = {}
-	done = set()
-	source_switch = hosts[source_host]['switch']
-
-	for destinated_host in hosts:
-
-		if destinated_host != source_host:
-			destinated_switch = hosts[destinated_host]['switch']
-			current = destinated_switch
-			parent = sp[source_switch][current]
-
-			while parent is not None and current not in done:
-				port = switches[parent][current]
-				if parent not in tree_ports:
-					tree_ports[parent] = set()
-					# print(tree_ports)
-				tree_ports[parent].add(port)
-				done.add(current)
-				current = parent
-				parent = sp[source_switch][current]
-
-			if destinated_switch not in tree_ports:
-				tree_ports[destinated_switch] = set()
-			tree_ports[destinated_switch].add(hosts[destinated_host]['port'])
-	# print(tree_ports)
-
-
-def tree_ports_all():
-	for sh in hosts: # source host
-		ports[sh] = build_sp_tree(sh)
-
 
 def shortest_paths_all():
 	global sp
@@ -235,7 +201,6 @@ def caminos_completos():
 
 load_json_topology()
 shortest_paths_all()
-tree_ports_all()
 print('\n')
 dump_sp()
 
