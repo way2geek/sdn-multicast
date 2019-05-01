@@ -15,7 +15,7 @@ def load_json_topology ():
 	global hosts
 	global dpids
 
-	filejson = open("/home/bruno/Escritorio/sdn-multicast-version2/2-Topologias/json/4-topo_tree_profundo.json")
+	filejson = open("../2-Topologias/json/4-topo_tree_profundo.json")
 	topojson = json.load(filejson)
 
 	switches = topojson['switches']
