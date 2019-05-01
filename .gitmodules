@@ -1,0 +1,2 @@
+[submodule "ryu"]
+	url = https://github.com/osrg/ryu.git
