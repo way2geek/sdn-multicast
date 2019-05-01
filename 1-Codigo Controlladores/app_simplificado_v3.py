@@ -15,7 +15,7 @@ def load_json_topology ():
 	global hosts
 	global dpids
 
-	filejson = open("../2-Topologias/json/4-topo_tree_profundo.json")
+	filejson = open("../2-Topologias/json/2-topo_linear_grande.json")
 	topojson = json.load(filejson)
 
 	switches = topojson['switches']
@@ -178,7 +178,6 @@ def caminos_completos():
 					puerto_aux=camino_entre_switches()[sw1][sw2]
 					caminos_completos[sw1][sw2].update({sw1:puerto_aux})
 
-				#corregir de aca en adelante
 				else:
 					#determino el camino switch por switch iterando
 					print ("Switch {} y {} NO estan conectados directamente".format(sw1,sw2))
@@ -193,6 +192,11 @@ def caminos_completos():
 
 					puerto_aux=camino_entre_switches()[nuevo_sw2][sw2]
 					caminos_completos[sw1][sw2].update({nuevo_sw2:puerto_aux})
+
+				# Se agrega paso final para agregar destino como valor
+				# de la key de destino 
+				puerto_aux=camino_entre_switches()[sw1][sw2]
+				caminos_completos[sw1][sw2].update({sw2:puerto_aux})
 
 	print caminos_completos
 	return caminos_completos
