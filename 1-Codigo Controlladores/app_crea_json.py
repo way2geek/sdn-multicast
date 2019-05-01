@@ -15,7 +15,7 @@ def load_json_topology ():
 	global hosts
 	global dpids
 
-	filejson = open("../2-Topologias/json/4-topo_tree_profundo.json")
+	filejson = open("../2-Topologias/json/2-topo_linear_grande_2.json")
 	topojson = json.load(filejson)
 
 	switches = topojson['switches']
@@ -57,7 +57,8 @@ def shortest_paths_all():
 
 	for switch in switches:
 		shortest_path[switch] = shortest_paths(switch)
-	#print(shortest_path)
+	print "\t CAMINOS + CORTOS: \n"
+	print(shortest_path)
 
 
 # def dump_shortest_path():
@@ -201,6 +202,56 @@ def caminos_completos():
 	#print caminos_completos
 	return caminos_completos
 
+def orden_caminos_completos():
+	caminos_completos_ordenado = {}
+	cami_compl = caminos_completos()
+	dict_ord ={}
+	dict_aux={}
+	lista=[]
+	switch_inicial="lucas"
+	for sw_ori in cami_compl:
+		for sw_dst in cami_compl:
+			# Guardo destino del path
+			lista.append(sw_dst)
+			# Tomo penultimo salto para ese destino
+			dst_aux = shortest_path[sw_ori][sw_dst]
+
+			# Diccionario para ordenar
+			dict_aux = cami_compl[sw_ori][sw_dst]
+
+			for sw_dic in dict_aux:
+				if(sw_dic == dst_aux):
+					print"sw_dic y dst_aux me dieron igual"
+					# Guardo valor del swich origen
+					switch_inicial = dst_aux
+				else:
+					# Guardo penultimo salto
+					lista.append(dst_aux)
+			lista.append(switch_inicial)
+
+
+
+				# print ("\tCAMINO desde {} hacia {}".format(sw_ori,sw_dst))
+				# # Tomo el camino para ese path en particular
+				# dict_aux = cami_compl[sw_ori][sw_dst]
+				# print "dict aux !!!!!!!!!!!!!"
+				# print dict_aux
+				# for sw_aux in dict_aux:
+				# 	print ("agarre {}".format(sw_aux))
+				#
+				# 	if(shortest_path[sw_ori][sw_aux]==None):
+				# 		print "fue None - coincidieron los switches"
+				# 		sw_inicio = sw_ori
+				# 	else:
+				# 		print("No dio none, dio {}".format(shortest_path[sw_ori][sw_aux]))
+				# 		# almacenar para ordenar
+				# 		# lista.append(shortest_path[sw_ori][sw_aux])
+	print "\t\tlista :"
+	print lista
+
+
+	return caminos_completos_ordenado
+
 
 def escribo_json():
 
@@ -219,4 +270,9 @@ def escribo_json():
 	#    print(json.load(fd))
 
 
+# LLAMADO A FUNCIONES:
+
 escribo_json()
+
+print "\tcaminos completos"
+orden_caminos_completos()
