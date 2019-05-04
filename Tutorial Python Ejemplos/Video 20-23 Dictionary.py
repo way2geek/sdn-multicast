@@ -82,3 +82,9 @@ if personas['persona1']['edad']=='90':
 
 if personas['persona1']['nombre']=='pepe':
     print 'vamo pepe'
+
+
+print "PRUEBA UPDATE"
+print personas
+personas['persona1'].update({"nombre":"LUCAS"})
+print personas
