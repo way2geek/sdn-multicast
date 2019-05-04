@@ -12,9 +12,14 @@ print arraycompleto
 arraycompleto2=array2
 # arraycompleto2.append(array1)
 # print arraycompleto2
+
+print "prueba extend"
 arraycompleto.extend(array3)
 print arraycompleto
-
+arraycompleto.extend(array3)
+arraycompleto.extend(array3)
+arraycompleto.extend(array3)
+print arraycompleto
 
 # if array1 in array2:
 #     print"ARRAY 1 en ARRAY 2"
@@ -77,5 +82,8 @@ print "array"
 arrayXX =array1
 print arrayXX
 
+arrayXX.append(array2)
+arrayXX.append(array2)
+arrayXX.append(array2)
 arrayXX.append(array2)
 print arrayXX
