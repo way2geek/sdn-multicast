@@ -3,7 +3,7 @@ from mininet.cli import CLI
 from mininet.node import OVSSwitch, RemoteController
 import json
 
-NOMBRE_TOPO_JSON = "2-topo_linear_grande.json"
+NOMBRE_TOPO_JSON = "/home/wal/Desktop/sdn-multicast/2-Topologias/json/topos_gran_porte/topo_linear_gran_porte.json"
 
 def net():
     net = Mininet()
