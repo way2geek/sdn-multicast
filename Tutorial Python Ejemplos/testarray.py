@@ -87,3 +87,39 @@ arrayXX.append(array2)
 arrayXX.append(array2)
 arrayXX.append(array2)
 print arrayXX
+
+array_puertos0 = ["puerto 2", "puerto 1", "puerto 3","hola"]
+array_puertos = ["puerto 1", "puerto 2", "puerto 3","baba"]
+array_puertos2 = ["puerto 3", "puerto 4"]
+# array_puertos.extend(array_puertos2)
+# print "RESULT="
+# print array_puertos
+
+# print "resta"
+array_resta=list(set(array_puertos) - set(array_puertos2))
+# print (array_resta)
+
+#Compara 2 arrays y devuelve True si
+#son iguales o False si son diferentes
+#no importa el orden de los elementos
+def arrays_iguales(ar1, ar2):
+    ret = False
+    array_resta=list(set(ar1) - set(ar2))
+    if(len(array_resta)==0):
+        ret = True
+    return ret
+
+# Devuelve un array con los elementos
+#que estan en ar1 pero no estan en ar2
+def diferencia_arrays(ar1, ar2):
+    result=[]
+    result=list(set(ar1) - set(ar2))
+    return result
+
+print "FUNCIONNNN"
+print arrays_iguales(array_puertos,array_puertos0)
+print "diferenciaaa"
+print diferencia_arrays(array_puertos,array_puertos0)
+
+print "palo"
+print diferencia_arrays(['A'],["1","2","3"])
