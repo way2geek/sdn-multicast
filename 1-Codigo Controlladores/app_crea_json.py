@@ -15,7 +15,7 @@ def load_json_topology ():
 	global hosts
 	global dpids
 
-	filejson = open("../2-Topologias/json/2-topo_linear_grande_2.json")
+	filejson = open("../2-Topologias/json/2-topo_linear_grande.json")
 	topojson = json.load(filejson)
 
 	switches = topojson['switches']
@@ -255,7 +255,7 @@ def orden_caminos_completos():
 
 def escribo_json():
 
-	filename = 'test.json'
+	filename = 'salida_topo.json'
 	load_json_topology()
 	shortest_paths_all()
 

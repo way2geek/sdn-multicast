@@ -151,7 +151,7 @@ class Controlador(app_manager.RyuApp):
     '''####FUNCIONES####'''
 
     def leer_json(self):
-        filejson = open("test.json")
+        filejson = open("salida_topo.json")
     	fp = json.load(filejson)
 
         self.conexion_switches = fp[0]
