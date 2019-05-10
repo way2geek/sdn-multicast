@@ -15,7 +15,7 @@ def load_json_topology ():
 	global hosts
 	global dpids
 
-	filejson = open("../2-Topologias/json/2-topo_linear_grande_2.json")
+	filejson = open("../2-Topologias/json/2-topo_linear_grande.json")
 	topojson = json.load(filejson)
 
 	switches = topojson['switches']
@@ -83,7 +83,7 @@ def swiches_conectados_directamente(dpid_origen, dpid_destino):
 				# print "puse true porque eran el mismo switch"
 	return estan_directamente_conectados
 
-def son_el_mismo_switch(sw1, sw2):
+def switches_son_iguales(sw1, sw2):
 	retorno = False
 	if (sw1 == sw2):
 		retorno = True
@@ -169,7 +169,7 @@ def caminos_completos():
 	#carga de switches a atravesar
 	for sw1 in switches:
 		for sw2 in switches:
-			if (son_el_mismo_switch(sw1, sw2)):
+			if (switches_son_iguales(sw1, sw2)):
 				#Son el mismo switch
 				caminos_completos[sw1][sw2].update({sw2:None})
 			else:
@@ -186,7 +186,7 @@ def caminos_completos():
 
 					# tomo nodo anterior mas cerano al destino
 					nuevo_sw2=shortest_path[sw1][sw2]
-					while(son_el_mismo_switch(sw1,nuevo_sw2)==False):
+					while(switches_son_iguales(sw1,nuevo_sw2)==False):
 						puerto_aux=camino_entre_switches()[nuevo_sw2][sw2]
 						caminos_completos[sw1][sw2].update({nuevo_sw2:puerto_aux})
 						nuevo_sw2=shortest_path[sw1][nuevo_sw2]
@@ -253,9 +253,9 @@ def orden_caminos_completos():
 	return caminos_completos_ordenado
 
 
-def escribo_json():
+def generar_json():
 
-	filename = 'test.json'
+	filename = 'salida_topo.json'
 	load_json_topology()
 	shortest_paths_all()
 
@@ -272,7 +272,7 @@ def escribo_json():
 
 # LLAMADO A FUNCIONES:
 
-escribo_json()
+generar_json()
 
 print "\tcaminos completos"
 orden_caminos_completos()
