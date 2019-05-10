@@ -156,72 +156,78 @@ class IgmpBase(object):
     # -------------------------------------------------------------------
     def _set_flow_entry_v1_0(self, datapath, actions, in_port, dst,
                              src=None):
-        ofproto = datapath.ofproto
-        parser = datapath.ofproto_parser
-
-        match = parser.OFPMatch(
-            dl_type=ether.ETH_TYPE_IP, in_port=in_port,
-            nw_src=self._ipv4_text_to_int(src),
-            nw_dst=self._ipv4_text_to_int(dst))
-        mod = parser.OFPFlowMod(
-            datapath=datapath, match=match, cookie=0,
-            command=ofproto.OFPFC_ADD, actions=actions)
-        datapath.send_msg(mod)
+        pass
+        # ofproto = datapath.ofproto
+        # parser = datapath.ofproto_parser
+        #
+        # match = parser.OFPMatch(
+        #     dl_type=ether.ETH_TYPE_IP, in_port=in_port,
+        #     nw_src=self._ipv4_text_to_int(src),
+        #     nw_dst=self._ipv4_text_to_int(dst))
+        # mod = parser.OFPFlowMod(
+        #     datapath=datapath, match=match, cookie=0,
+        #     command=ofproto.OFPFC_ADD, actions=actions)
+        # datapath.send_msg(mod)
 
     def _set_flow_entry_v1_2(self, datapath, actions, in_port, dst,
                              src=None):
-        ofproto = datapath.ofproto
-        parser = datapath.ofproto_parser
-
-        match = parser.OFPMatch(
-            eth_type=ether.ETH_TYPE_IP, in_port=in_port, ipv4_dst=dst)
-        if src is not None:
-            match.append_field(ofproto.OXM_OF_IPV4_SRC, src)
-        inst = [parser.OFPInstructionActions(
-            ofproto.OFPIT_APPLY_ACTIONS, actions)]
-        mod = parser.OFPFlowMod(
-            datapath=datapath, command=ofproto.OFPFC_ADD,
-            priority=65535, match=match, instructions=inst)
-        datapath.send_msg(mod)
+        pass
+        # ofproto = datapath.ofproto
+        # parser = datapath.ofproto_parser
+        #
+        # match = parser.OFPMatch(
+        #     eth_type=ether.ETH_TYPE_IP, in_port=in_port, ipv4_dst=dst)
+        # if src is not None:
+        #     match.append_field(ofproto.OXM_OF_IPV4_SRC, src)
+        # inst = [parser.OFPInstructionActions(
+        #     ofproto.OFPIT_APPLY_ACTIONS, actions)]
+        # mod = parser.OFPFlowMod(
+        #     datapath=datapath, command=ofproto.OFPFC_ADD,
+        #     priority=1500, match=match, instructions=inst)
+        # datapath.send_msg(mod)
 
     def _set_flow_entry(self, datapath, actions, in_port, dst, src=None):
         """set a flow entry."""
-        set_flow = self._set_flow_func.get(datapath.ofproto.OFP_VERSION)
-        assert set_flow
-        set_flow(datapath, actions, in_port, dst, src)
+        pass
+        # set_flow = self._set_flow_func.get(datapath.ofproto.OFP_VERSION)
+        # assert set_flow
+        # set_flow(datapath, actions, in_port, dst, src)
 
     def _del_flow_entry_v1_0(self, datapath, in_port, dst, src=None):
-        ofproto = datapath.ofproto
-        parser = datapath.ofproto_parser
-
-        match = parser.OFPMatch(
-            dl_type=ether.ETH_TYPE_IP, in_port=in_port,
-            nw_src=self._ipv4_text_to_int(src),
-            nw_dst=self._ipv4_text_to_int(dst))
-        mod = parser.OFPFlowMod(
-            datapath=datapath, match=match, cookie=0,
-            command=ofproto.OFPFC_DELETE)
-        datapath.send_msg(mod)
+        pass
+        # ofproto = datapath.ofproto
+        # parser = datapath.ofproto_parser
+        #
+        # match = parser.OFPMatch(
+        #     dl_type=ether.ETH_TYPE_IP, in_port=in_port,
+        #     nw_src=self._ipv4_text_to_int(src),
+        #     nw_dst=self._ipv4_text_to_int(dst))
+        # mod = parser.OFPFlowMod(
+        #     datapath=datapath, match=match, cookie=0,
+        #     command=ofproto.OFPFC_DELETE)
+        # datapath.send_msg(mod)
 
     def _del_flow_entry_v1_2(self, datapath, in_port, dst, src=None):
-        ofproto = datapath.ofproto
-        parser = datapath.ofproto_parser
-
-        match = parser.OFPMatch(
-            eth_type=ether.ETH_TYPE_IP, in_port=in_port, ipv4_dst=dst)
-        if src is not None:
-            match.append_field(ofproto.OXM_OF_IPV4_SRC, src)
-        mod = parser.OFPFlowMod(
-            datapath=datapath, command=ofproto.OFPFC_DELETE,
-            out_port=ofproto.OFPP_ANY, out_group=ofproto.OFPG_ANY,
-            match=match)
-        datapath.send_msg(mod)
+        pass
+        # ofproto = datapath.ofproto
+        # parser = datapath.ofproto_parser
+        #
+        # match = parser.OFPMatch(
+        #     eth_type=ether.ETH_TYPE_IP, in_port=in_port, ipv4_dst=dst)
+        # if src is not None:
+        #     match.append_field(ofproto.OXM_OF_IPV4_SRC, src)
+        # mod = parser.OFPFlowMod(
+        #     datapath=datapath, command=ofproto.OFPFC_DELETE,
+        #     out_port=ofproto.OFPP_ANY, out_group=ofproto.OFPG_ANY,
+        #     match=match)
+        # datapath.send_msg(mod)
 
     def _del_flow_entry(self, datapath, in_port, dst, src=None):
-        """remove a flow entry."""
-        del_flow = self._del_flow_func.get(datapath.ofproto.OFP_VERSION)
-        assert del_flow
-        del_flow(datapath, in_port, dst, src)
+        pass
+        # """remove a flow entry."""
+        # del_flow = self._del_flow_func.get(datapath.ofproto.OFP_VERSION)
+        # assert del_flow
+        # del_flow(datapath, in_port, dst, src)
 
     def _do_packet_out(self, datapath, data, in_port, actions):
         """send a packet."""
@@ -552,6 +558,7 @@ class IgmpSnooper(IgmpBase):
             self.logger.info(log + "[LEAVE]")
             self._do_leave(req_igmp, in_port, msg)
         elif igmp.IGMP_TYPE_REPORT_V3 == req_igmp.msgtype:
+            
             self.logger.info(log + "V3 is not supported yet.")
             self._do_flood(in_port, msg)
         else:
