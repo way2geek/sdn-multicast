@@ -43,7 +43,7 @@ def net():
 
     for aux in topojson['hosts']:
         host = net.get(aux)
-        host.cmd('echo 2 > /proc/sys/net/ipv4/conf/{}-eth1/force_igmp_version'.format(aux))
+        host.cmd('echo 2 > /proc/sys/net/ipv4/conf/{}-eth0/force_igmp_version'.format(aux))
         host.cmd('ip route add default via 10.0.0.250')
 
 
