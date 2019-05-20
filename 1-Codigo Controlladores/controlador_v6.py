@@ -12,7 +12,8 @@ from ryu.lib.dpid import str_to_dpid
 from ryu.lib.packet import igmp
 import igmplib
 import json
-
+import time
+import datetime
 
 PRIORITY_MAX = 2000
 PRIORITY_MID = 900
@@ -112,7 +113,7 @@ class Controlador(app_manager.RyuApp):
 
                         self.camino_grupos[group_id].setdefault('origen', {})
                         self.camino_grupos[group_id]['origen'].update({switch_origen:in_port})
-
+                        self.loggear_arbol_multicast(self.camino_grupos)
                         self.manejo_trafico_multicast(group_id, IPV4dst, switch_origen)
 
                     else:
@@ -283,7 +284,7 @@ class Controlador(app_manager.RyuApp):
 
             self.camino_grupos[group_id]['camino'][switch_destino] = self.caminos_completos[switch_origen][switch_destino]
             self.camino_grupos[group_id]['camino'][switch_destino][switch_destino] = self.camino_grupos[group_id]['switches_destino'][switch_destino]
-            print('EL CAMINO DEL GRUPO {} ES {}'.format(group_id, self.camino_grupos))
+            # print('EL CAMINO DEL GRUPO {} ES {}'.format(group_id, self.camino_grupos))
             #print('Los switches del camino de origen {} y destino {} son {}'.format(switch_origen, switch_destino, self.camino_grupos[group_id]['camino'][switch_destino]))
             #print('LOS SWITCHES DEL CAMINO DEL GROUP ID {} SON {}'.format(group_id, switches_del_camino))
             self.obtener_dic_arboles(self.camino_grupos)
@@ -341,7 +342,7 @@ class Controlador(app_manager.RyuApp):
 
     def existe_flujo_group_table(self, switch, group_id):
         retorno = False
-        print('COOKIES_GRUPOS {}'.format(self.datapath_switch[switch]['cookies_grupos']))
+        # print('COOKIES_GRUPOS {}'.format(self.datapath_switch[switch]['cookies_grupos']))
         if group_id in self.datapath_switch[switch]['cookies_grupos']:
             retorno = True
 
@@ -594,3 +595,52 @@ class Controlador(app_manager.RyuApp):
         switch = self.obtener_nombre_switch(datapath.id)
         self.datapath_switch.setdefault(switch, {})
         self.datapath_switch[switch].update({'datapath':datapath, 'id':datapath.id, 'cookies_grupos':[]})
+
+    # Funcion para escribir estado de "arboles" multicast
+    # en archivo de texto con el historico.
+    # Permite ver los cambios dentro de los grupos a cada
+    # momento
+    def loggear_arbol_multicast(self, diccionario_camino_grupos):
+        # Se crea archivo
+        file_arboles = open("arboles_multicast.txt","a+")
+        # Se loguea tiempo
+        ts=time.time()
+        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        file_arboles.write("\nLog Time = "+st)
+
+        for grupo in diccionario_camino_grupos:
+            ip_grupo = self.obterner_ip_grupo (grupo)
+            # Se loguea IP del grupo Multicast
+            file_arboles.write("\n\tIP GRUPO : "+str(ip_grupo))
+            s_ori = diccionario_camino_grupos[grupo]['origen'].keys()
+            # Se loguea switch origen del arbol Multicast
+            file_arboles.write("\n\t\tSwitch Origen : "+(str(s_ori)[3:5]))
+
+            for s_dst in diccionario_camino_grupos[grupo]['switches_destino']:
+                # Se loguea un switch destino de ese gruposwitch_origen
+                file_arboles.write("\n\t\t\tSwitch Destino : "+str(s_dst))
+                file_arboles.write("\n\t\t\t\tCamino:")
+
+                #Se loguea el camino para ese par Origen-destino
+                for s_cami in diccionario_camino_grupos[grupo]['camino']:
+                    puertos = diccionario_camino_grupos[grupo]['camino'][s_cami].values()
+                    text_sw_camino = "\n\t\t\t\t\tSwitch "+str(s_cami)+ " envia trafico por puerto/s"
+                    puertos = str(puertos)
+                    puertos = puertos.replace("["," ")
+                    puertos = puertos.replace("]"," ")
+                    text_sw_camino = text_sw_camino + puertos
+                    file_arboles.write(text_sw_camino)
+        # Se cierra archivo de salida
+        file_arboles.close()
+
+    # Funcion quevuelve la IP del grupo Multicast
+    # para cierto group ID
+    def obterner_ip_grupo (self, un_group_id):
+        ip_del_grupo = -1
+        for una_ip in self.lista_grupos:
+            if (un_group_id == self.lista_grupos[una_ip]):
+                ip_del_grupo = una_ip
+            else:
+                print "No se encontro IP del grupo"
+                # pass
+        return ip_del_grupo
