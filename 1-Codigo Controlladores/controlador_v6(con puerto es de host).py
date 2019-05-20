@@ -12,7 +12,8 @@ from ryu.lib.dpid import str_to_dpid
 from ryu.lib.packet import igmp
 import igmplib
 import json
-
+import time
+import datetime
 
 PRIORITY_MAX = 2000
 PRIORITY_MID = 900
@@ -23,21 +24,23 @@ TABLE_1 = 0
 TABLE_2 = 10
 TABLE_3 = 20
 
+cookie_group_table = 0x55200000
+
 
 class Controlador(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
-    # _CONTEXTS = {'igmplib': igmplib.IgmpLib}
+    _CONTEXTS = {'igmplib': igmplib.IgmpLib}
 
     def __init__(self, *args, **kwargs):
         super(Controlador, self).__init__(*args, **kwargs)
 
         'DEFINO SWITCH DE LA TOPOLOGIA COMO QUERIER'
-        # self._snoop = kwargs['igmplib']
-        # self._snoop.set_querier_mode(
-        #     dpid=str_to_dpid('0000000000000001'), server_port=1)
+        self._snoop = kwargs['igmplib']
+        self._snoop.set_querier_mode(
+            dpid=str_to_dpid('0000000000000001'), server_port=1)
 
-        # 'Obtengo grupos multicast generados por el protocolo IGMP'
-        # self.gruposM = self._snoop._snooper._to_hosts
+        'Obtengo grupos multicast generados por el protocolo IGMP'
+        self.gruposM = self._snoop._snooper._to_hosts
 
         self.camino_grupos = {}
 
@@ -96,29 +99,8 @@ class Controlador(app_manager.RyuApp):
         pktIPV4 = pkt.get_protocol(ipv4.ipv4)
         IPV4dst = pktIPV4.dst
 
-        if req_igmp:
-            #print('FUE IGMP')
-            if igmp.IGMP_TYPE_LEAVE == req_igmp.msgtype:
-                #print('FUE UN LEAVE')
-                'HAY QUE VER SI EL SWITCH ES DESTINO'
-                'SI ES DESTINO TOMO IN PORT Y LO BORRO DE LA LISTA DE PUERTOS ASOCIADOS A ESE SWITCH DESTINO'
-                'SI ES EL UNICO PUERTO ASOCIADO A ESE DESTINO BORRO EL DESTINO'
-                if self.puerto_es_de_host(in_port, datapath)[0]:
-                    #print('VINO UN LEAVE DEL HOST {} DEL SWITCH {} AL GRUPO {}'.format(self.puerto_es_de_host(in_port, datapath)[1], datapath.id, req_igmp.address))
-                    self.manejo_leave(datapath, req_igmp.address, in_port)
+        if not req_igmp:
 
-            elif igmp.IGMP_TYPE_REPORT_V1 == req_igmp.msgtype or igmp.IGMP_TYPE_REPORT_V2 == req_igmp.msgtype:
-                #print('FUE UN REPORT')
-                'HAY QUE VER SI EL IN PORT ES UN HOST Y SI PERTENECE A UN GRUPO'
-                'SI EL GRUPO NO EXISTE SE CREA EL GRUPO'
-                'SI EL GRUPO YA EXISTE SE MODIFICA EL GRUPO'
-                if self.puerto_es_de_host(in_port, datapath)[0]:
-                    #print('VINO UN REPORT DEL HOST {} DEL SWITCH {} AL GRUPO {}'.format(self.puerto_es_de_host(in_port, datapath)[1], datapath.id, IPV4dst))
-                    self.manejo_report(datapath, IPV4dst, in_port)
-            else:
-                print('NO SE SOPORTA IGMPv3')
-
-        else:
             if self.esMulticast(destino):
 
                 if self.es_origen(datapath, in_port):
@@ -129,19 +111,50 @@ class Controlador(app_manager.RyuApp):
 
                         group_id = self.lista_grupos[IPV4dst]
 
+                        self.camino_grupos[group_id].setdefault('origen', {})
                         self.camino_grupos[group_id]['origen'].update({switch_origen:in_port})
-
+                        self.loggear_arbol_multicast(self.camino_grupos)
                         self.manejo_trafico_multicast(group_id, IPV4dst, switch_origen)
 
                     else:
                         print('NO EXISTE EL GRUPO {}'.format(IPV4dst))
 
 
+    @set_ev_cls(igmplib.EventMulticastGroupStateChanged, MAIN_DISPATCHER)
+    def _status_changed(self, ev):
+        ofproto = ev.datapath.ofproto
+        dpid = ev.datapath.id
+
+        msg = {
+            igmplib.MG_GROUP_ADDED: 'Multicast Group Added',
+            igmplib.MG_MEMBER_CHANGED: 'Multicast Group Member Changed',
+            igmplib.MG_GROUP_REMOVED: 'Multicast Group Removed',
+        }
+
+        self.logger.info("%s: [%s] querier:[%s] hosts:%s switch:%s group_id:%s",
+                         msg.get(ev.reason), ev.address, ev.src,
+                         ev.dsts, dpid, ev.group_id)
+
+        if ev.reason == igmplib.MG_GROUP_ADDED and ev.address not in self.lista_grupos:
+
+            self.agrego_grupo_multicast(ev.datapath, dpid, ev.address, ofproto)
+
+        elif ev.reason == igmplib.MG_MEMBER_CHANGED:
+
+            self.modifico_grupo_multicast(ev.datapath, dpid, ev.address, ofproto, ev.dsts)
+
+        elif ev.reason == igmplib.MG_GROUP_REMOVED:
+
+            self.elimino_grupo_multicast(ev.datapath, dpid, ev.address, ofproto)
+
+
+
     '''####FUNCIONES####'''
 
     def leer_json(self):
-        filejson = open("test.json")
-    	fp = json.load(filejson)
+        filejson = open("salida_topo.json")
+        fp = json.load(filejson)
+    
 
         self.conexion_switches = fp[0]
         #print('conexion_switches {}'.format(self.conexion_switches))
@@ -163,6 +176,7 @@ class Controlador(app_manager.RyuApp):
 
     def esMulticast(self, dst):
         'Valida si direccion MAC es multicast'
+
         return (dst[0:2] == '01' or dst[0:5] == '33:33')
 
 
@@ -201,98 +215,45 @@ class Controlador(app_manager.RyuApp):
 
     def agrego_grupo_multicast(self, datapath, dpid, address, ofproto):
 
-        self.groupID = self.groupID + 1
-        #group_id = self.groupID
-        self.agregar_par_IP_groupID(address, self.groupID)
-        self.camino_grupos.setdefault(self.groupID, {})
-        self.camino_grupos[self.groupID].setdefault('switches_destino', {})
-        self.camino_grupos[self.groupID].setdefault('camino', {})
-        self.camino_grupos[self.groupID].setdefault('origen', {})
-        self.switches_por_gid.setdefault(self.groupID, {})
+        group_id = self.gruposM[dpid][address]['group_id']
+        self.unir_direccion_grupo(address, group_id)
+        self.camino_grupos.setdefault(group_id, {})
+        self.switches_por_gid.setdefault(group_id, {})
         for switch in self.conexion_switches:
-            self.switches_por_gid[self.groupID].setdefault(switch, [])
+            self.switches_por_gid[group_id].setdefault(switch, [])
+        #self.puertos_switches_camino.setdefault(group_id, {})
 
 
-    def modifico_grupo_multicast(self, datapath, dpid, address, ofproto, in_port, modo):
+    def modifico_grupo_multicast(self, datapath, dpid, address, ofproto, dsts):
+
         group_id = self.lista_grupos[address]
         switch_destino = self.obtener_nombre_switch(dpid)
+        puertos_host = self.puerto_es_de_host(dpid, dsts)
 
-        if modo == 'report':
+        if (len(puertos_host) > 0):
+            print('ES UN HOST DESTINO EN EL SWITCH {}'.format(dpid))
 
-            if switch_destino not in self.camino_grupos[group_id]['switches_destino']:
-                self.camino_grupos[group_id]['switches_destino'].update({switch_destino:[]})
-                self.camino_grupos[group_id]['camino'].setdefault(switch_destino, {})
-                print('Se agrego el switch {} al grupo {}'.format(switch_destino, group_id))
-                self.camino_grupos[group_id]['switches_destino'][switch_destino].append(in_port)
-            else:
-                if in_port not in self.camino_grupos[group_id]['switches_destino'][switch_destino]:
-                    self.camino_grupos[group_id]['switches_destino'][switch_destino].append(in_port)
-                    self.switches_por_gid[group_id][switch_destino].append(in_port)
+            self.camino_grupos[group_id].setdefault('switches_destino', {})
+            self.camino_grupos[group_id]['switches_destino'].update({switch_destino:[]})
 
-        elif modo == 'leave':
-            if len(self.camino_grupos[group_id]['switches_destino'][switch_destino]) > 0:
-                self.camino_grupos[group_id]['switches_destino'][switch_destino].remove(in_port)
-                print('EL host conectado al puerto {} se fue del grupo {}'.format(in_port, group_id))
+            self.camino_grupos[group_id]['switches_destino'][switch_destino] = puertos_host
 
-            if len(self.camino_grupos[group_id]['switches_destino'][switch_destino]) == 0:
-                self.camino_grupos[group_id]['switches_destino'].pop(switch_destino)
-                print('Se elimino el switch destino {} del grupo {}'.format(switch_destino, group_id))
-                if len(self.camino_grupos[group_id]['switches_destino'].keys()) == 0:
-                    self.elimino_grupo_multicast(datapath, address)
-                    print('Se elimino el grupo'.format(group_id))
+            self.camino_grupos[group_id].setdefault('camino', {})
+            self.camino_grupos[group_id]['camino'].setdefault(switch_destino, {})
 
-
-    def elimino_grupo_multicast(self, datapath, address):
-        dpid = datapath.id
-        ofproto = datapath.ofproto
-
-        pass
-        # if address in self.lista_grupos:
-        #     group_id = self.lista_grupos[address]
-        #     switch_aux = self.obtener_nombre_switch(dpid)
-        #
-        #     if self.switch_es_de_acceso(dpid) and switch_aux in self.camino_grupos[group_id]['switches_destino']:
-        #
-        #         for switch_destino in list(self.camino_grupos[group_id]['switches_destino']):
-        #             if switch_aux == switch_destino:
-        #                 for switch_camino in list(self.camino_grupos[group_id]['camino'][switch_destino]):
-        #
-        #                     datapath = self.datapath_switch[switch_camino]['datapath']
-        #                     self.add_group_flow(datapath, group_id, datapath.ofproto.OFPGC_DELETE, datapath.ofproto.OFPGT_ALL)
-        #                     self.eliminar_flow_mcast(datapath, TABLE_3, address, group_id, datapath.id)
-        #
-        #                     self.camino_grupos[group_id]['camino'][switch_destino].pop(switch_camino)
-        #
-        #                 self.camino_grupos[group_id]['camino'].pop(switch_destino)
-        #                 self.camino_grupos[group_id]['switches_destino'].pop(switch_destino)
-        #             self.datapath_switch[switch_destino]['cookies_grupos'].remove(group_id)
-        #         print('SE ELIMINO EL GRUPO {}'.format(group_id))
-        #
-        #     if len(self.camino_grupos[group_id]['switches_destino'].keys()) == 0:
-        #         try:
-        #             self.lista_grupos.pop(address)
-        #             self.switches_por_gid.pop(group_id)
-        #         except KeyError:
-        #             print("Key not found")
-
-
-    def manejo_leave(self, datapath, address, in_port):
-        ofproto = datapath.ofproto
-        dpid = datapath.id
-        modo = 'leave'
-        self.modifico_grupo_multicast(datapath, dpid, address, ofproto, in_port, modo)
-
-
-    def manejo_report(self, datapath, address, in_port):
-        ofproto = datapath.ofproto
-        dpid = datapath.id
-        modo = 'report'
-
-        if address not in self.lista_grupos:
-            self.agrego_grupo_multicast(datapath, dpid, address, ofproto)
-            self.modifico_grupo_multicast(datapath, dpid, address, ofproto, in_port, modo)
         else:
-            self.modifico_grupo_multicast(datapath, dpid, address, ofproto, in_port, modo)
+            print('ENTRE AL ELSE')
+
+        print('SE MODIFICO EL GRUPO {} EN EL SWITCH {}'.format(group_id, dpid))
+
+
+    def elimino_grupo_multicast(self, datapath, dpid, address, ofproto):
+
+        group_id = self.lista_grupos[address]
+        puertos = self.getGroupOutPorts(address, dpid)
+        buckets = self.generoBuckets(datapath, puertos)
+        self.add_group_flow(datapath, group_id, ofproto.OFPGC_DELETE, ofproto.OFPGT_ALL, buckets)
+        self.eliminar_flow_mcast(datapath, TABLE_3, address, group_id, dpid)
 
 
     # Funcion para escribir diccionario que se utiliza
@@ -314,6 +275,7 @@ class Controlador(app_manager.RyuApp):
             for sw_dst in dic_camino_grupos[g_id]['camino']:
                 for sw_camino in dic_camino_grupos[g_id]['camino'][sw_dst]:
                     listado_puertos = self.diferencia_arrays(dic_camino_grupos[g_id]['camino'][sw_dst][sw_camino], self.switches_por_gid[g_id][sw_camino])
+                    #dic_camino_grupos[g_id]['camino'][sw_dst][sw_camino].extend(listado_puertos)
                     self.switches_por_gid[g_id][sw_camino].extend(listado_puertos)
 
 
@@ -323,7 +285,9 @@ class Controlador(app_manager.RyuApp):
 
             self.camino_grupos[group_id]['camino'][switch_destino] = self.caminos_completos[switch_origen][switch_destino]
             self.camino_grupos[group_id]['camino'][switch_destino][switch_destino] = self.camino_grupos[group_id]['switches_destino'][switch_destino]
-
+            # print('EL CAMINO DEL GRUPO {} ES {}'.format(group_id, self.camino_grupos))
+            #print('Los switches del camino de origen {} y destino {} son {}'.format(switch_origen, switch_destino, self.camino_grupos[group_id]['camino'][switch_destino]))
+            #print('LOS SWITCHES DEL CAMINO DEL GROUP ID {} SON {}'.format(group_id, switches_del_camino))
             self.obtener_dic_arboles(self.camino_grupos)
 
             for switch_camino in self.camino_grupos[group_id]['camino'][switch_destino]:
@@ -332,11 +296,13 @@ class Controlador(app_manager.RyuApp):
                 if self.existe_flujo_group_table(switch_camino, group_id):
 
                     puertos_salida = self.switches_por_gid[group_id][switch_camino]
+
                     #print('LOS PUERTOS DE SALIDA DEL SWITCH DEL CAMINO {} HACIA EL DESTINO {} DEL GRUPO {} SON {}'.format(switch_camino, switch_destino, group_id, puertos_salida))
                     buckets =  self.generoBuckets(datapath, puertos_salida)
                     self.add_group_flow(datapath, group_id, datapath.ofproto.OFPGC_MODIFY, datapath.ofproto.OFPGT_ALL, buckets)
 
                 else:
+                    #self.puertos_salida_switches_camino[group_id].setdefault(switch_destino, {})
                     self.add_group_flow(datapath, group_id, datapath.ofproto.OFPGC_ADD, datapath.ofproto.OFPGT_ALL)
                     self.add_flow_to_group(datapath, IPV4dst, group_id)
                     self.datapath_switch[switch_camino]['cookies_grupos'].append(group_id)
@@ -367,7 +333,6 @@ class Controlador(app_manager.RyuApp):
             ret = True
         return ret
 
-
     # Devuelve un array con los elementos
     #que estan en ar1 pero no estan en ar2
     def diferencia_arrays(self, ar1, ar2):
@@ -378,7 +343,7 @@ class Controlador(app_manager.RyuApp):
 
     def existe_flujo_group_table(self, switch, group_id):
         retorno = False
-        #print('COOKIES_GRUPOS {}'.format(self.datapath_switch[switch]['cookies_grupos']))
+        # print('COOKIES_GRUPOS {}'.format(self.datapath_switch[switch]['cookies_grupos']))
         if group_id in self.datapath_switch[switch]['cookies_grupos']:
             retorno = True
 
@@ -396,43 +361,35 @@ class Controlador(app_manager.RyuApp):
 
         return retorno
 
-
     #Funcion que recibe el datapath y un puerto de un switch
-    #y devuelve True y el Host en particular que
+    #y devuelve True y el Host en particular que 
     #esta en ese puerto de ese switch.
-    def puerto_es_de_host(self, un_puerto, datapath):
-        #es = False
-        #host = None
-        retorno = [False, None]
-        nom_sw = self.obtener_nombre_switch(datapath.id)
+    def puerto_es_de_host2(self, un_puerto, datapath):
+        es = False
+        host = None
+        nom_sw = self.obtener_nombre_switch(datapath)
         #Se recorre diccionario de topologia y si
         #matchea el switch y puerto con cierto
         #con cualquier hosta, devuelve True
         for host_aux in self.conexion_hosts_switches:
-            puerto_aux = self.conexion_hosts_switches[host_aux]['port']
-            switch_aux = self.conexion_hosts_switches[host_aux]['switch']
-
-            #print ("AUX = {}".format(switch_aux))
+            puerto_aux = self.conexion_hosts_switches['port']
+            switch_aux = self.conexion_hosts_switches['switch']
 
             if(switch_aux == nom_sw):
                 if (puerto_aux == un_puerto):
-                    retorno[0] = True
-                    retorno[1] = host_aux
-                    print ("DEBUG: Host hallado {}".format(host_aux))
+                    es = True
+                    host = host_aux
+                    print ("DEBUG: Host hallado {}".format(host))
                 else:
-                    pass
-                    #print ("DEBUG: Puerto {} no coincidio con argumento {}".format(puerto_aux,un_puerto))
+                    print ("DEBUG: Puerto {} no coincidio con argumento {}".format(puerto_aux,un_puerto))
             else:
-                pass
-                #print ("DEBUG: Switch {} no coincidio con argumento {}".format(switch_aux,nom_sw))
-        return retorno
-
-
+                print ("DEBUG: Switch {} no coincidio con argumento {}".format(switch_aux,nom_sw))
+        return es, host
+    
     #Funcion que recibe un switch y su lista de puertos
     #y devuelve una lista que contiene los puertos
     #donde hay conectados hosts.
     def obtener_puertos_de_hosts(self, dpid, puertos):
-        retorno = False
         switch_aux = None
         puertos_aux = []
         switch_aux = self.obtener_nombre_switch(dpid)
@@ -442,9 +399,7 @@ class Controlador(app_manager.RyuApp):
                 for puerto in puertos:
                     if self.conexion_hosts_switches[host_aux]['port'] == puerto:
                         puertos_aux.append(puerto)
-
-        return retorno
-
+        return puertos_aux
 
     #Funcion que devuelve el nombre de un switch
     #en formato "sN" siendo N el numero de switch
@@ -535,6 +490,33 @@ class Controlador(app_manager.RyuApp):
                             out_group=out_group)
 
 
+    def getGroupPorts(self, destino, dpid):
+        'Se obtiene diccionario de puertos del switch'
+
+        ports = {}
+        puertosOut = []
+        puertosIn = []
+
+        for s_id, g_info in self.gruposM.items():
+            if s_id == dpid:
+                for dst, d_info in g_info.items():
+                    if destino == dst:
+                        ports = d_info['ports']
+        return ports
+
+
+    def getGroupOutPorts(self, destino, dpid):
+        'Se obtienen los puertos de salida de un switch referidos a un grupo multicast'
+
+        puertosOUT = []
+        puertos = self.getGroupPorts(destino, dpid)
+
+        for puerto in puertos:
+            puertosOUT.append(puerto)
+
+        return puertosOUT
+
+
     def generoBuckets(self, datapath, puertos):
         'Se generan buckets de acciones para puertos de salida'
 
@@ -545,8 +527,7 @@ class Controlador(app_manager.RyuApp):
 
         for outPort in puertos:
 
-            accion = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER),
-                      parser.OFPActionOutput(outPort)]
+            accion = [parser.OFPActionOutput(outPort)]
             actions.append(accion)
 
         for action in actions:
@@ -576,53 +557,60 @@ class Controlador(app_manager.RyuApp):
         msgs = []
         #DROPS
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_LLDP)))
+
         # Drop STP BPDU
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_dst='01:80:c2:00:00:00')))
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_dst='01:00:0c:cc:cc:cd')))
+
         # Drop Broadcast Sources
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_src='ff:ff:ff:ff:ff:ff')))
+
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_IPV6)))
+
         self.send_msgs(datapath, msgs)
 
 
-    #Funcion que agrega la pareja IP-Group ID
-    #al diccionario lista_grupos
-    def agregar_par_IP_groupID(self, ip_mcast, group_id):
+    def quitar_direccion_grupo(self, ip_mcast, dpid):
+        #Elimina del diccionario grupo multicast
+        self.lista_grupos.pop(ip_mcast)
+
+
+    def unir_direccion_grupo(self, ip_mcast, group_id):
+
         #self.lista_grupos.setdefault(dpid, {})
         self.lista_grupos.update({ip_mcast:group_id})
 
 
-    #Funcion que elimina un grupo del diccionario de grupos multicast
-    def quitar_direccion_grupo(self, ip_mcast, dpid):
-        self.lista_grupos.pop(ip_mcast)
-
-
-    #Funcion para eliminar las reglas usadas en un grupo multicast
+    #funcion para eliminar las rutas para un grupo multicast
+    #que ya no se utilice
     def eliminar_flow_mcast(self, datapath, TABLE_ID, ip_mcast, group_id, dpid):
+
         print("Elimino grupo multicast {} del switch {}".format(group_id, dpid))
-        #print(self.lista_grupos)
-        #self.quitar_direccion_grupo(ip_mcast, dpid)
-        #print(self.lista_grupos)
+        print(self.lista_grupos)
+        self.quitar_direccion_grupo(ip_mcast, dpid)
+        print(self.lista_grupos)
         self.flowdel(datapath, TABLE_ID, ip_mcast, group_id)
 
 
-    #Funcion que devuelve True si un switch contiene
-    #al menos un host conectado
-    def switch_es_de_acceso(self, dpid):
+    def switch_acceso(self, dpid):
         retorno = False
         aux = []
+
         for switch in self.conexion_switches:
             #print('VOY A TRABAJAR {}'.format(switch))
             if dpid == self.dpids[switch]:
+
                 for host in self.conexion_hosts_switches:
                     if switch == self.conexion_hosts_switches[host]['switch']:
                         aux.append(host)
+
         if len(aux) > 0:
             #print('EL SWITCH {} ES DE ACCESO Y SE ENCUENTRA CONECTADO A LOS HOSTS {}'.format(dpid, aux))
             retorno = True
         else:
             #print('EL SWITCH {} NO ES DE ACCESO'.format(dpid))
             retorno = False
+
         return retorno
 
 
@@ -630,7 +618,6 @@ class Controlador(app_manager.RyuApp):
         switch = self.obtener_nombre_switch(datapath.id)
         self.datapath_switch.setdefault(switch, {})
         self.datapath_switch[switch].update({'datapath':datapath, 'id':datapath.id, 'cookies_grupos':[]})
-
 
     # Funcion para escribir estado de "arboles" multicast
     # en archivo de texto con el historico.
