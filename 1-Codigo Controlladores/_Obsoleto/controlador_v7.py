@@ -142,7 +142,7 @@ class Controlador(app_manager.RyuApp):
 
     def leer_json(self):
         filejson = open("test.json")
-    	fp = json.load(filejson)
+        fp = json.load(filejson)
 
         self.conexion_switches = fp[0]
         #print('conexion_switches {}'.format(self.conexion_switches))
