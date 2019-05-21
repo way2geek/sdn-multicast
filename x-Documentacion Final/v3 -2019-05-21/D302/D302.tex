@@ -91,9 +91,8 @@ Subtítulo (opcional)
 \vspace{5cm}
 
 \begin{Large}
-\textbf{Lucas Viera - 177863.}\\
-\textbf{Bruno Riccardi - 183531.}\\
-%\textbf{Nombre Autor 3 - Nro Estud.}\\
+\textbf{Lucas Viera - 177863}\\
+\textbf{Bruno Riccardi - 183531}\\
 \bigskip
 
 \textbf{Tutor: Álvaro Sanchez}
@@ -141,15 +140,15 @@ XXXX \hfill YYYY \\
 
 
 
-\chapter*{Dedicatoria (opcional)}
+%\chapter*{Dedicatoria (opcional)}
+%
+%No es obligatorio incluirla.
 
-No es obligatorio incluirla.
 
 
-
-\chapter*{Agradecimientos (opcional)}
-No es obligatorio incluirlos. Se trata de un breve reconocimiento a personas o instituciones que de diversas maneras han ayudado en la elaboración del trabajo. 
-Asegúrese de usar los nombres correctos y completos de las instituciones y las personas que cite aquí.
+%\chapter*{Agradecimientos (opcional)}
+%No es obligatorio incluirlos. Se trata de un breve reconocimiento a personas o instituciones que de diversas maneras han ayudado en la elaboración del trabajo. 
+%Asegúrese de usar los nombres correctos y completos de las instituciones y las personas que cite aquí.
 
 
 
@@ -246,8 +245,23 @@ Sub sub seccion
 
 subseccion
 
+\chapter{Objetivos} 
+\label{objetivos} % para poder referenciarlo después usando \ref{objetivos}
+
+into para objetivos...
+
+\section{Objetivos generales}
+\label{obj_generales}
+
+objetivos generales
+
+\section{Objetivos específicos}
+\label{obj_especificos}
+
+objetivos especificos
+
 \chapter{Marco Teórico} 
-\label{marcoteorico} % para poder referenciarlo después usando \ref{intro}
+\label{marcoteorico} % para poder referenciarlo después usando \ref{marcoteorico}
 
 A modo de ejemplo introducimos el siguiente texto autogenerado:
 
@@ -324,9 +338,6 @@ Contadores: contador que se actualiza cada vez que un paquete es procesado en el
 “Action Buckets”: es el conjunto de acciones a ejecutar sobre un paquete.
 
 
-\section{Open vSwitch}
-
-Open vSwitch
 
 \section{Multicast}
 \label{marco_multicast}
@@ -392,21 +403,23 @@ En una transmisión unicast el tráfico es enviado a través de la red por un so
 
 
 \subsection{Multicast en Capa 2}
-
+\label{mcast_l2}
 
 
 \subsection{Multicast en Capa 3: IP Multicast}
-
+\label{mcast_l3}
 ip multicast
 
 
 \section{Internet Group Management Protocol (IGMP)}
 
 \subsection{IGMPv1}
+\label{igmpv1}
 
 Es la primera versión de IGMP y consta de sólo dos tipos de mensajes de control, Membership Report (MR), emitido por los hosts, y Membership Query (MQ), emitido por el router. No implementa un mecanismo para que un host abandone un grupo Multicast. Los receptores envían un MR y el router designado lo registra en el grupo. El router envía periódicamente un MQ para comprobar si al menos un receptor continúa interesado en recibir tráfico del grupo. 
 
 \subsection{IGMPv2}
+\label{igmpv2}
 
 IGMPv2 implementa la misma funcionalidad básica de IGMPv1. Se diferencia en que introduce un nuevo tipo de mensaje para abandonar el grupo Multicast, llamado Leave Group (LG). Gracias a este mensaje se identifica inmediatamente los receptores que ya no desean pertenecer al grupo Multicast. Cuando un host quiere abandonar el grupo envía un mensaje LG a la dirección Multicast 224.0.0.2. El router envía un mensaje MQ al grupo que el host quiere abandonar, si el host no responde con un MR, entonces se le deja de enviar tráfico al host. Si no se recibe ningún MR de parte del grupo se elimina el grupo Multicast.
 
@@ -414,6 +427,7 @@ IGMPv2 especifica dos modalidades de consulta, General Query y Group Specific Qu
 
 
 \subsection{IGMPv3}
+\label{igmpv3}
 
 IGMPv3 agrega con respecto a las versiones anteriores, la funcionalidad de permitir que un receptor solicite recibir o dejar de recibir tráfico de una fuente o varias determinadas pertenecientes a un grupo. También añade otro tipo de mensaje de consulta, Group and Source Specific Query, para preguntar qué receptor continúa interesado en recibir tráfico Multicast de varias fuentes o una fuente concreta.
 
@@ -443,11 +457,12 @@ Protocol Independent Sparse Mode (PIM-SM)
 
 
 \section{Protocol Independent Multicast (PIM)}
-
+\label{marco_pim}
 PIM es un protocolo desarrollado con el objetivo de estandarizar el enrutamiento Multicast que puede proporcionar un enrutamiento entre dominios a través de Internet, independientemente de los mecanismos proporcionados por los protocolos de enrutamiento unicast. Presenta dos modos operativos, uno para grupos Multicast densamente distribuidos (PIM-DM) y otro para grupos de distribución dispersa (PIM-SM).
 
 
 \subsection{PIM Sparse Mode}
+\label{pimsm}
 
 En PIM-SM no se envía tráfico Multicast salvo que un receptor lo requiera. Para distribuir el tráfico se utilizan árboles RPT donde el RP se fija como punto de encuentro para los paquetes que se envían de las fuentes a los hosts. Entonces cada router si recibe tráfico Multicast lo va a enviar al RP y cada router que quiera recibir tráfico se va a dirigir al router RP.
 
@@ -471,6 +486,7 @@ En la siguiente imagen se muestra el cambio realizado en la ruta.
 
 
 \subsection{PIM Dense Mode}
+\label{pimdm}
 
 PIM-DM.
 	PIM-DM es un protocolo de enrutamiento de modo denso, que construye árboles de tipo SPT inundando de tráfico Multicast la red y luego utiliza  pruning para eliminar las ramas donde no se encuentren receptores. 
@@ -496,11 +512,11 @@ ASM y SSM no son protocolos, son modelos de servicio. Diferentes protocolos son 
 
 
 \section{Open vSwitch}
-
+\label{marco_openvswitch}
 Open vSwitch
 
 \section{Mininet}
-
+\label{marco_mininet}
 El software Mininet, es un emulador gratuito de elementos de redes SDN que puede representar virtualmente switches, routers y hosts clientes que emulan el kernel de Linux. Funciona  ya sea en un sistema Linux así como máquina virtual con otro sistema operativo lo que lo hace muy flexible para ambientes de investigación, desarrollo y enseñanza.
 
 Además, permite la rápida creación de topologías complejas, testeo de desarrollos particulares, simulación de redes y todo sobre una misma consola. Es un proyecto de la ONF y por lo tanto, soporta el protocolo Openflow. En la imagen a continuación, se representa la “virtualización” posible gracias a Mininet, de los elementos físico de una posible red que se quiera emular:
@@ -518,6 +534,7 @@ foto
 
 
 \section{Controlador RYU}
+\label{marco_ryu}
 
 El presente Proyecto será desarrollado utilizando aplicaciones del controlador RYU. Su significado, del japonés, es “flujo”. Este controlador, provee componentes de software sobre los cuales se pueden construir aplicaciones complejas para implementaciones de SDN. 
 
@@ -525,14 +542,37 @@ Es un software abierto cuyo código está disponible para todo público y soport
 
 Como desventaja, se podría señalar la falta de una interfaz gráfica para su configuración, como tienen otros controladores de SDN, aunque sí tiene un entorno gráfico para la visualización de las topologías llamado “Ryu Topology Viewer”.
 
-Finalmente, dentro de las funcionalidades implementadas que vienen embebidas con RYU, se pueden mencionar el controlador “simple_switch.py” que está implementado para varias versiones de Openflow y, básicamente, permite el conocimiento de los host conectados a cierto switch y el armado de una tabla de direcciones MAC.
+Finalmente, dentro de las funcionalidades implementadas que vienen embebidas con RYU, se pueden mencionar el controlador simple switch py que está implementado para varias versiones de Openflow y, básicamente, permite el conocimiento de los host conectados a cierto switch y el armado de una tabla de direcciones MAC.
 
+\chapter{Plan de ejecución y lecciones aprendidas.}
+\label{plan_aprendizaje_ejecucion}
+
+Notar que se genera una página nueva al iniciar un capítulo.
+
+\section{Plan de ejecución.}
+
+\section{Lecciones aprendidas.}
 
 \chapter{Otro Capítulo}
 
-Notar quue se genera una página nueva al iniciar un capítulo.
+Notar que se genera una página nueva al iniciar un capítulo.
 
-pepitp
+pepito
+
+
+\section{Software desarrollado.}
+
+Se describen los scripts, clases, metodos, estructura de datos utilizadas para resolver el problema...
+
+\subsection{Desarrollo del Controlador.}
+
+
+\subsubsection{Uso de Librería igmp.py.}
+
+\subsubsection{Desarrollo paralelo a igmplib.py.}
+
+\subsubsection{Uso de Librería IGMP.}
+
 \section{Otra Sección}
 
 En esta sección incluimos una figura.
@@ -543,11 +583,14 @@ En esta sección incluimos una figura.
  \label{fig1}
 \end{figure}
 
-\subsection{Otra Subsección}
-\lipsum[2-5]
+\subsection{Una Subsección}
+
+subseccion
 
 \chapter{Conclusiones}
-\lipsum[1-6]
+\label{conclusiones}
+
+Conclusiones
 
 
 
@@ -557,20 +600,26 @@ En esta sección incluimos una figura.
 %% No borrar estas dos líneas. Revisar de tener los archivos IEEETran y biblio.bib en la misma carpeta
 %% si no están y no anda, correr el compilador de latex varias veces. Primero el bibtex, luego pdflatex, luego pdflatex otra vez.
 \bibliography{biblio}
-
+\label{bibliografia}
 
 \appendix %A partir de acá los capítulos se enumerarán A, B, C, etc
 
 
 \chapter{Nombre del Apéndice 1} 
-\lipsum[1]
+\label{apendice1}
+Apendice
+
 \section{Una Sección}
-\lipsum[2-3]
+
+Seccion apendice
+
 \subsection{Una Subsección}
-\lipsum[4-6]
+
+Subseccion apendice
 
 \chapter{Nombre del Apéndice 2} 
-\lipsum[6-9]
+
+Seccion apendice 2
 
 %\end{appendices}
 
