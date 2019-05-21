@@ -24,21 +24,18 @@ def load_json_topology ():
 
 
 def shortest_paths(origen):
-
 	distancia = {}
 	switch_anterior = {}
-
 	switches_to_go = switches.keys()
 	#print(switches_to_go)
+	
 	for node in switches_to_go:
-
 		distancia[node] = float('inf')
 		switch_anterior[node] = None
 
 	distancia[origen] = 0
 
 	while len(switches_to_go) > 0:
-
 		switches_to_go.sort(key = lambda x: distancia[x])
 		#print(switches_to_go)
 		switch_mas_cercano = switches_to_go.pop(0)
@@ -49,7 +46,6 @@ def shortest_paths(origen):
 				if aux < distancia[switch_aux]:
 					distancia[switch_aux] = aux
 					switch_anterior[switch_aux] = switch_mas_cercano
-
 	return switch_anterior
 
 def shortest_paths_all():
@@ -57,7 +53,7 @@ def shortest_paths_all():
 
 	for switch in switches:
 		shortest_path[switch] = shortest_paths(switch)
-	print "\t CAMINOS + CORTOS: \n"
+	print ("\t CAMINOS + CORTOS: \n")
 	print(shortest_path)
 
 
@@ -83,6 +79,9 @@ def swiches_conectados_directamente(dpid_origen, dpid_destino):
 				# print "puse true porque eran el mismo switch"
 	return estan_directamente_conectados
 
+#Funcion que recibe dos switches
+#y devuelve True si son el mismo
+#o False si son distintos.
 def switches_son_iguales(sw1, sw2):
 	retorno = False
 	if (sw1 == sw2):
@@ -105,7 +104,7 @@ def determinar_puerto_salida(dpid_origen, dpid_destino):
 		puerto_salida = switches[dpid_origen][dpid_destino]
 	# Caso mismo switch
 	elif(shortest_path[dpid_origen][dpid_destino] == None):
-		print "Son el mismo switch"
+		print ("Son el mismo switch")
 	# Caso switches separados
 	else:
 		while (puerto_salida == -1):
@@ -221,7 +220,7 @@ def orden_caminos_completos():
 
 			for sw_dic in dict_aux:
 				if(sw_dic == dst_aux):
-					print"sw_dic y dst_aux me dieron igual"
+					print ("sw_dic y dst_aux me dieron igual")
 					# Guardo valor del swich origen
 					switch_inicial = dst_aux
 				else:
@@ -246,33 +245,25 @@ def orden_caminos_completos():
 				# 		print("No dio none, dio {}".format(shortest_path[sw_ori][sw_aux]))
 				# 		# almacenar para ordenar
 				# 		# lista.append(shortest_path[sw_ori][sw_aux])
-	print "\t\tlista :"
-	print lista
+	print ("\t\tlista :")
+	print (lista)
 
 
 	return caminos_completos_ordenado
 
 
 def generar_json():
-
 	filename = 'salida_topo.json'
 	load_json_topology()
 	shortest_paths_all()
-
 	#shortest_path = {}			#shortest paths
 	camino_entre_hosts1 = camino_entre_hosts()
 	caminos_completos1 = caminos_completos()
-
 	with open(filename, 'w') as fd:
 	    fd.write(json.dumps([switches, hosts, dpids, camino_entre_hosts1, caminos_completos1]))    # both dicts in a list here
 
-	#with open(filename, 'r') as fd:
-	#    print(json.load(fd))
-
-
 # LLAMADO A FUNCIONES:
-
 generar_json()
 
-print "\tcaminos completos"
+print ("\tcaminos completos")
 orden_caminos_completos()
