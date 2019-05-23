@@ -8,7 +8,7 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib.packet import ipv4
 from ryu.lib.packet import igmp
-import igmplib
+# import igmplib
 import json
 import time
 import datetime
@@ -360,8 +360,8 @@ class Controlador(app_manager.RyuApp):
     #no importa el orden de los elementos
     def arrays_iguales(self, ar1, ar2):
         ret = False
-        array_resta=list(set(ar1) - set(ar2))
-        if(len(array_resta)==0):
+        lista_resta= list(set(ar1) - set(ar2))
+        if(len(lista_resta)==0):
             ret = True
         return ret
 
@@ -369,9 +369,26 @@ class Controlador(app_manager.RyuApp):
     # Devuelve un array con los elementos
     #que estan en ar1 pero no estan en ar2
     def diferencia_arrays(self, ar1, ar2):
-        result=[]
-        result=list(set(ar1) - set(ar2))
-        return result
+        en1_no2=[]
+        
+        # print("DEBUG ar1 = {}".format(ar1))
+        # print("DEBUG ar2 = {}".format(ar2))
+        # result=list(set(str(ar1)) - set(str(ar2)))
+        # print("DEBUG result = {}".format(result))
+
+        # Se toman un elemento de cada lista.
+        # Se itera la segunda lista y se compara
+        # con el primer elemento. 
+        for elemento_a1 in ar1:
+            for elemento_a2 in ar2:
+                if(elemento_a1 == elemento_a2):
+                    pass
+                else:
+                    if(elemento_a1 not in result):
+                        en1_no2.append(elemento_a1)
+                    else:
+                        pass
+        return en1_no2
 
 
     def existe_flujo_group_table(self, switch, group_id):
