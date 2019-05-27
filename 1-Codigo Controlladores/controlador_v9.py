@@ -1,6 +1,6 @@
 from ryu.base import app_manager
 from ryu.controller import ofp_event
-from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
+from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER, DEAD_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
 from ryu.lib.packet import packet
@@ -8,11 +8,12 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib.packet import ipv4
 from ryu.lib.packet import igmp
-# import igmplib
+from ryu.lib import hub
+import igmplib
 import json
 import time
 import datetime
-
+from operator import attrgetter
 
 PRIORITY_MAX = 2000
 PRIORITY_MID = 900
@@ -30,20 +31,24 @@ class Controlador(app_manager.RyuApp):
     def __init__(self, *args, **kwargs):
         super(Controlador, self).__init__(*args, **kwargs)
 
+        #self.monitor_thread = hub.spawn(self._monitor)
+        # self.datapaths = []
+        # self.flows = {}
+        # self.tables_id = [0, 10, 20]
+
         self.camino_grupos = {}
 
         'Datos de control para el controlador'
         self.groupID = 0
         self.lista_grupos = {}
-        self.datapath_switch = {}
-        self.caminos_entre_hosts = {}
-        self.caminos_completos = {}
         self.switches_por_gid = {}
-        self.dic_buckets = {}
+        self.datapath_switch = {}
+        self.caminos_completos = {}
 
         'Datos de la topologia en la cual el controlador funciona'
         self.conexion_switches = {}
         self.conexion_hosts_switches = {}
+        self.caminos_entre_hosts = {}
         self.dpids = {}
 
         self.leer_json()
@@ -57,12 +62,10 @@ class Controlador(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
         dpid = datapath.id
-
+        self.datapaths.append(datapath)
         self.obtener_datapath_switches(datapath)
-
+        self.flows.setdefault(datapath.id, {})
         self.default_flows(datapath, parser, ofproto)
-
-        self.dic_buckets.setdefault(self.obtener_nombre_switch(datapath.id), [])
 
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
@@ -88,23 +91,19 @@ class Controlador(app_manager.RyuApp):
         IPV4dst = pktIPV4.dst
 
         if req_igmp:
-            #print('FUE IGMP')
+
             if igmp.IGMP_TYPE_LEAVE == req_igmp.msgtype:
-                #print('FUE UN LEAVE')
                 'HAY QUE VER SI EL SWITCH ES DESTINO'
                 'SI ES DESTINO TOMO IN PORT Y LO BORRO DE LA LISTA DE PUERTOS ASOCIADOS A ESE SWITCH DESTINO'
                 'SI ES EL UNICO PUERTO ASOCIADO A ESE DESTINO BORRO EL DESTINO'
                 if self.puerto_es_de_host(in_port, datapath)[0]:
-                    #print('VINO UN LEAVE DEL HOST {} DEL SWITCH {} AL GRUPO {}'.format(self.puerto_es_de_host(in_port, datapath)[1], datapath.id, req_igmp.address))
                     self.manejo_leave(datapath, req_igmp.address, in_port)
 
             elif igmp.IGMP_TYPE_REPORT_V1 == req_igmp.msgtype or igmp.IGMP_TYPE_REPORT_V2 == req_igmp.msgtype:
-                #print('FUE UN REPORT')
                 'HAY QUE VER SI EL IN PORT ES UN HOST Y SI PERTENECE A UN GRUPO'
                 'SI EL GRUPO NO EXISTE SE CREA EL GRUPO'
                 'SI EL GRUPO YA EXISTE SE MODIFICA EL GRUPO'
                 if self.puerto_es_de_host(in_port, datapath)[0]:
-                    #print('VINO UN REPORT DEL HOST {} DEL SWITCH {} AL GRUPO {}'.format(self.puerto_es_de_host(in_port, datapath)[1], datapath.id, IPV4dst))
                     self.manejo_report(datapath, IPV4dst, in_port)
             else:
                 print('NO SE SOPORTA IGMPv3')
@@ -127,22 +126,83 @@ class Controlador(app_manager.RyuApp):
                         print('NO EXISTE EL GRUPO {}'.format(IPV4dst))
 
 
+    # @set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
+    # def flow_stats_reply_handler(self, ev):
+    #
+    #     filename = 'flows.json'
+    #     datapath = ev.msg.datapath
+    #     dpid = datapath.id
+    #
+    #     for stat in ev.msg.body:
+    #
+    #         self.flows[dpid].update({'table_id':stat.table_id,
+    #                             'priority':stat.priority,
+    #                             'idle_timeout':stat.idle_timeout,
+    #                             'hard_timeout':stat.hard_timeout,
+    #                             'packet_count':stat.packet_count,
+    #                             'byte_count':stat.byte_count})
+    #
+    #         with open(filename, 'w+') as fd:
+    #     	    fd.write(json.dumps(self.flows))
+
+
     '''####FUNCIONES####'''
 
+    # def _monitor(self):
+    #     while True:
+    #         for dp in self.datapaths:
+    #             self.send_flow_stats_request(dp)
+    #             print('ENVIO REQUEST')
+    #         hub.sleep(20)
+    #
+    #
+    # def send_flow_stats_request(self, datapath):
+    #     ofp = datapath.ofproto
+    #     ofp_parser = datapath.ofproto_parser
+    #
+    #     cookie = cookie_mask = 0
+    #
+    #     req = ofp_parser.OFPFlowStatsRequest(datapath, 0,
+    #                                          ofp.OFPTT_ALL,
+    #                                          ofp.OFPP_ANY, ofp.OFPG_ANY,
+    #                                          cookie, cookie_mask)
+    #     datapath.send_msg(req)
+    #     req = ofp_parser.OFPFlowStatsRequest(datapath, 10,
+    #                                          ofp.OFPTT_ALL,
+    #                                          ofp.OFPP_ANY, ofp.OFPG_ANY,
+    #                                          cookie, cookie_mask)
+    #     datapath.send_msg(req)
+    #     req = ofp_parser.OFPFlowStatsRequest(datapath, 20,
+    #                                          ofp.OFPTT_ALL,
+    #                                          ofp.OFPP_ANY, ofp.OFPG_ANY,
+    #                                          cookie, cookie_mask)
+    #     datapath.send_msg(req)
+    #
+
     def leer_json(self):
-        filejson = open("salida_topo.json")
+        filejson = open("test.json")
     	fp = json.load(filejson)
 
         self.conexion_switches = fp[0]
-        #print('conexion_switches {}'.format(self.conexion_switches))
         self.conexion_hosts_switches = fp[1]
-        #print('conexion_hosts_switches {}'.format(self.conexion_hosts_switches))
         self.dpids = fp[2]
-        #print('dpids {}'.format(self.dpids))
         self.caminos_entre_hosts = fp[3]
-        #print('caminos_entre_hosts {}'.format(self.caminos_entre_hosts))
         self.caminos_completos = fp[4]
-        #print('caminos_completos {}'.format(self.caminos_completos))
+
+
+    def backup_sistema(self, datos):
+        filename = 'backup.json'
+        with open(filename, 'w') as fp:
+            fp.write(json.dumps(datos))
+
+
+    def existe_archivo_camino_grupos(self, fn):
+        try:
+            open(fn, "r")
+            return True
+        except IOError:
+            print "Error: File does not appear to exist."
+            return False
 
 
     def send_msgs(self, dp, msgs):
@@ -192,7 +252,6 @@ class Controlador(app_manager.RyuApp):
     def agrego_grupo_multicast(self, datapath, dpid, address, ofproto):
 
         self.groupID = self.groupID + 1
-        #group_id = self.groupID
         self.agregar_par_IP_groupID(address, self.groupID)
         self.camino_grupos.setdefault(self.groupID, {})
         self.camino_grupos[self.groupID].setdefault('switches_destino', {})
@@ -214,23 +273,27 @@ class Controlador(app_manager.RyuApp):
                 self.camino_grupos[group_id]['camino'].setdefault(switch_destino, {})
                 print('Se agrego el switch {} al grupo {}'.format(switch_destino, group_id))
                 self.camino_grupos[group_id]['switches_destino'][switch_destino].append(in_port)
+                print(self.camino_grupos)
             else:
                 if in_port not in self.camino_grupos[group_id]['switches_destino'][switch_destino]:
                     self.camino_grupos[group_id]['switches_destino'][switch_destino].append(in_port)
                     self.switches_por_gid[group_id][switch_destino].append(in_port)
-
+                    print(self.camino_grupos)
         elif modo == 'leave':
             if len(self.camino_grupos[group_id]['switches_destino'][switch_destino]) > 0:
                 self.camino_grupos[group_id]['switches_destino'][switch_destino].remove(in_port)
                 print('EL host conectado al puerto {} se fue del grupo {}'.format(in_port, group_id))
+                print(self.camino_grupos)
 
             if len(self.camino_grupos[group_id]['switches_destino'][switch_destino]) == 0:
                 self.camino_grupos[group_id]['switches_destino'].pop(switch_destino)
                 print('Se elimino el switch destino {} del grupo {}'.format(switch_destino, group_id))
+                print(self.camino_grupos)
 
                 if len(self.camino_grupos[group_id]['switches_destino'].keys()) == 0:
                     self.elimino_grupo_multicast(address, switch_destino, group_id)
-                    print('Se elimino el grupo'.format(group_id))
+                    print('Se elimino el grupo {}'.format(group_id))
+                    print(self.camino_grupos)
 
 
     def elimino_grupo_multicast(self, address, switch_destino, group_id):
@@ -245,33 +308,6 @@ class Controlador(app_manager.RyuApp):
         self.camino_grupos.pop(group_id)
         self.switches_por_gid.pop(group_id)
         self.lista_grupos.pop(address)
-        # if address in self.lista_grupos:
-        #     group_id = self.lista_grupos[address]
-        #     switch_aux = self.obtener_nombre_switch(dpid)
-        #
-        #     if self.switch_es_de_acceso(dpid) and switch_aux in self.camino_grupos[group_id]['switches_destino']:
-        #
-        #         for switch_destino in list(self.camino_grupos[group_id]['switches_destino']):
-        #             if switch_aux == switch_destino:
-        #                 for switch_camino in list(self.camino_grupos[group_id]['camino'][switch_destino]):
-        #
-        #                     datapath = self.datapath_switch[switch_camino]['datapath']
-        #                     self.add_group_flow(datapath, group_id, datapath.ofproto.OFPGC_DELETE, datapath.ofproto.OFPGT_ALL)
-        #                     self.eliminar_flow_mcast(datapath, TABLE_3, address, group_id, datapath.id)
-        #
-        #                     self.camino_grupos[group_id]['camino'][switch_destino].pop(switch_camino)
-        #
-        #                 self.camino_grupos[group_id]['camino'].pop(switch_destino)
-        #                 self.camino_grupos[group_id]['switches_destino'].pop(switch_destino)
-        #             self.datapath_switch[switch_destino]['cookies_grupos'].remove(group_id)
-        #         print('SE ELIMINO EL GRUPO {}'.format(group_id))
-        #
-        #     if len(self.camino_grupos[group_id]['switches_destino'].keys()) == 0:
-        #         try:
-        #             self.lista_grupos.pop(address)
-        #             self.switches_por_gid.pop(group_id)
-        #         except KeyError:
-        #             print("Key not found")
 
 
     def manejo_leave(self, datapath, address, in_port):
@@ -291,15 +327,6 @@ class Controlador(app_manager.RyuApp):
             self.modifico_grupo_multicast(datapath, dpid, address, ofproto, in_port, modo)
         else:
             self.modifico_grupo_multicast(datapath, dpid, address, ofproto, in_port, modo)
-
-
-    # Funcion para escribir diccionario que se utiliza
-    # para escribir puertos de salida en cada switch
-    # sin importar a que grupo pertenezca
-    def obtener_dic_buckets(self, dic_arboles):
-        for gid in dic_arboles:
-            for sw in dic_arboles[gid]:
-                self.dic_buckets[sw].extend(dic_arboles[gid][sw])
 
 
     # Funcion para cargar un diccionario que representa
@@ -330,7 +357,6 @@ class Controlador(app_manager.RyuApp):
                 if self.existe_flujo_group_table(switch_camino, group_id):
 
                     puertos_salida = self.switches_por_gid[group_id][switch_camino]
-                    #print('LOS PUERTOS DE SALIDA DEL SWITCH DEL CAMINO {} HACIA EL DESTINO {} DEL GRUPO {} SON {}'.format(switch_camino, switch_destino, group_id, puertos_salida))
                     buckets =  self.generoBuckets(datapath, puertos_salida)
                     self.add_group_flow(datapath, group_id, datapath.ofproto.OFPGC_MODIFY, datapath.ofproto.OFPGT_ALL, buckets)
 
@@ -355,45 +381,16 @@ class Controlador(app_manager.RyuApp):
         return puertos_de_salida
 
 
-    #Compara 2 arrays y devuelve True si
-    #son iguales o False si son diferentes
-    #no importa el orden de los elementos
-    def arrays_iguales(self, ar1, ar2):
-        ret = False
-        lista_resta= list(set(ar1) - set(ar2))
-        if(len(lista_resta)==0):
-            ret = True
-        return ret
-
-
     # Devuelve un array con los elementos
     #que estan en ar1 pero no estan en ar2
     def diferencia_arrays(self, ar1, ar2):
-        en1_no2=[]
-        
-        # print("DEBUG ar1 = {}".format(ar1))
-        # print("DEBUG ar2 = {}".format(ar2))
-        # result=list(set(str(ar1)) - set(str(ar2)))
-        # print("DEBUG result = {}".format(result))
-
-        # Se toman un elemento de cada lista.
-        # Se itera la segunda lista y se compara
-        # con el primer elemento. 
-        for elemento_a1 in ar1:
-            for elemento_a2 in ar2:
-                if(elemento_a1 == elemento_a2):
-                    pass
-                else:
-                    if(elemento_a1 not in result):
-                        en1_no2.append(elemento_a1)
-                    else:
-                        pass
-        return en1_no2
+        result=[]
+        result=list(set(ar1) - set(ar2))
+        return result
 
 
     def existe_flujo_group_table(self, switch, group_id):
         retorno = False
-        #print('COOKIES_GRUPOS {}'.format(self.datapath_switch[switch]['cookies_grupos']))
         if group_id in self.datapath_switch[switch]['cookies_grupos']:
             retorno = True
 
@@ -427,19 +424,11 @@ class Controlador(app_manager.RyuApp):
             puerto_aux = self.conexion_hosts_switches[host_aux]['port']
             switch_aux = self.conexion_hosts_switches[host_aux]['switch']
 
-            #print ("AUX = {}".format(switch_aux))
-
             if(switch_aux == nom_sw):
                 if (puerto_aux == un_puerto):
                     retorno[0] = True
                     retorno[1] = host_aux
-                    print ("DEBUG: Host hallado {}".format(host_aux))
-                else:
-                    pass
-                    #print ("DEBUG: Puerto {} no coincidio con argumento {}".format(puerto_aux,un_puerto))
-            else:
-                pass
-                #print ("DEBUG: Switch {} no coincidio con argumento {}".format(switch_aux,nom_sw))
+
         return retorno
 
 
@@ -452,7 +441,6 @@ class Controlador(app_manager.RyuApp):
         puertos_aux = []
         switch_aux = self.obtener_nombre_switch(dpid)
         for host_aux in self.conexion_hosts_switches:
-            #print(host_aux)
             if self.conexion_hosts_switches[host_aux]['switch'] == switch_aux:
                 for puerto in puertos:
                     if self.conexion_hosts_switches[host_aux]['port'] == puerto:
@@ -491,15 +479,21 @@ class Controlador(app_manager.RyuApp):
         self.add_flow(datapath, TABLE_2, PRIORITY_MID, match, instructions)
 
 
-    def add_flow(self, datapath, table_id, priority, match, instructions, buffer_id=None):
+    def add_flow(self, datapath, table_id, priority, match, instructions, idle_timeout = None, hard_timeout = None):
         'Se genera flujo en flow table'
 
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
-
-        mod = parser.OFPFlowMod(datapath=datapath, table_id=table_id,
-                                priority=priority,
-                                match=match, instructions=instructions)
+        if idle_timeout != None and hard_timeout != None:
+            mod = parser.OFPFlowMod(datapath=datapath, table_id=table_id,
+                                    idle_timeout=idle_timeout,
+                                    hard_timeout=hard_timeout,
+                                    priority=priority,
+                                    match=match, instructions=instructions)
+        else:
+            mod = parser.OFPFlowMod(datapath=datapath, table_id=table_id,
+                                    priority=priority,
+                                    match=match, instructions=instructions)
         datapath.send_msg(mod)
 
 
@@ -531,8 +525,10 @@ class Controlador(app_manager.RyuApp):
         actions = [parser.OFPActionGroup(group_id=group_id)]
         instructions = [self.apply_actions(datapath, actions)]
 
+        idle_timeout = 15
+        hard_timeout = 300
         print('AGREGO FLUJO A GROUP TABLE {}'.format(group_id))
-        self.add_flow(datapath, TABLE_3, PRIORITY_MAX, match, instructions)
+        self.add_flow(datapath, TABLE_3, PRIORITY_MAX, match, instructions, idle_timeout, hard_timeout)
 
 
     def flowdel(self, datapath, table_id, destino, out_group, priority=None):
@@ -602,7 +598,6 @@ class Controlador(app_manager.RyuApp):
     #Funcion que agrega la pareja IP-Group ID
     #al diccionario lista_grupos
     def agregar_par_IP_groupID(self, ip_mcast, group_id):
-        #self.lista_grupos.setdefault(dpid, {})
         self.lista_grupos.update({ip_mcast:group_id})
 
 
@@ -614,9 +609,6 @@ class Controlador(app_manager.RyuApp):
     #Funcion para eliminar las reglas usadas en un grupo multicast
     def eliminar_flow_mcast(self, datapath, TABLE_ID, ip_mcast, group_id, dpid):
         print("Elimino grupo multicast {} del switch {}".format(group_id, dpid))
-        #print(self.lista_grupos)
-        #self.quitar_direccion_grupo(ip_mcast, dpid)
-        #print(self.lista_grupos)
         self.flowdel(datapath, TABLE_ID, ip_mcast, group_id)
 
 
@@ -626,16 +618,13 @@ class Controlador(app_manager.RyuApp):
         retorno = False
         aux = []
         for switch in self.conexion_switches:
-            #print('VOY A TRABAJAR {}'.format(switch))
             if dpid == self.dpids[switch]:
                 for host in self.conexion_hosts_switches:
                     if switch == self.conexion_hosts_switches[host]['switch']:
                         aux.append(host)
         if len(aux) > 0:
-            #print('EL SWITCH {} ES DE ACCESO Y SE ENCUENTRA CONECTADO A LOS HOSTS {}'.format(dpid, aux))
             retorno = True
         else:
-            #print('EL SWITCH {} NO ES DE ACCESO'.format(dpid))
             retorno = False
         return retorno
 
@@ -683,6 +672,7 @@ class Controlador(app_manager.RyuApp):
         # Se cierra archivo de salida
         file_arboles.close()
 
+
     # Funcion quevuelve la IP del grupo Multicast
     # para cierto group ID
     def obterner_ip_grupo (self, un_group_id):
@@ -692,5 +682,5 @@ class Controlador(app_manager.RyuApp):
                 ip_del_grupo = una_ip
             else:
                 print "No se encontro IP del grupo"
-                # pass
+
         return ip_del_grupo

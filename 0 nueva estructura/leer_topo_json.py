@@ -2,10 +2,9 @@ from mininet.net import Mininet
 from mininet.cli import CLI
 from mininet.node import OVSSwitch, RemoteController
 import json
+import sys
 
-NOMBRE_TOPO_JSON = "3-topo_tree_3_ramas.json"
-
-def net():
+def net(NOMBRE_TOPO_JSON):
     net = Mininet()
     filejson = open(NOMBRE_TOPO_JSON)
     topojson = json.load(filejson)
@@ -53,4 +52,10 @@ def net():
     net.stop()
 
 if __name__ == '__main__':
-    net()
+    if(len(sys.argv)==2):
+        NOMBRE_TOPO_JSON = sys.argv[1]
+        # print(NOMBRE_TOPO_JSON)
+        net(NOMBRE_TOPO_JSON)
+    else:
+        print("ERROR: no se ingreso path para topologia.")
+        print("Cerrando...")
