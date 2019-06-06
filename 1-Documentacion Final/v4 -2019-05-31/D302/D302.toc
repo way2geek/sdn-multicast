@@ -1,0 +1,57 @@
+\babel@toc {spanish}{}
+\contentsline {chapter}{\numberline {1}Introducci\IeC {\'o}n}{7}{chapter.1}
+\contentsline {section}{\numberline {1.1}Motivaci\IeC {\'o}n.}{8}{section.1.1}
+\contentsline {section}{\numberline {1.2}Enfoques y estudio de ideas.}{8}{section.1.2}
+\contentsline {section}{\numberline {1.3}Objetivos.}{8}{section.1.3}
+\contentsline {subsection}{\numberline {1.3.1}Objetivos Generales.}{8}{subsection.1.3.1}
+\contentsline {subsection}{\numberline {1.3.2}Objetivos Espec\IeC {\'\i }ficos.}{8}{subsection.1.3.2}
+\contentsline {chapter}{\numberline {2}Marco Te\IeC {\'o}rico}{9}{chapter.2}
+\contentsline {section}{\numberline {2.1}Software Defined Networking}{9}{section.2.1}
+\contentsline {section}{\numberline {2.2}Openflow}{10}{section.2.2}
+\contentsline {subsection}{\numberline {2.2.1}Openflow 1.3}{12}{subsection.2.2.1}
+\contentsline {section}{\numberline {2.3}Multicast}{12}{section.2.3}
+\contentsline {subsection}{\numberline {2.3.1}Multicast en Capa 2}{14}{subsection.2.3.1}
+\contentsline {subsection}{\numberline {2.3.2}Multicast en Capa 3: IP Multicast}{14}{subsection.2.3.2}
+\contentsline {section}{\numberline {2.4}Internet Group Management Protocol (IGMP)}{15}{section.2.4}
+\contentsline {subsection}{\numberline {2.4.1}IGMPv1}{15}{subsection.2.4.1}
+\contentsline {subsection}{\numberline {2.4.2}IGMPv2}{15}{subsection.2.4.2}
+\contentsline {subsection}{\numberline {2.4.3}IGMPv3}{15}{subsection.2.4.3}
+\contentsline {subsection}{\numberline {2.4.4}Protocolos de enrutamiento}{15}{subsection.2.4.4}
+\contentsline {section}{\numberline {2.5}Protocol Independent Multicast (PIM)}{16}{section.2.5}
+\contentsline {subsection}{\numberline {2.5.1}PIM Sparse Mode}{16}{subsection.2.5.1}
+\contentsline {subsection}{\numberline {2.5.2}PIM Dense Mode}{17}{subsection.2.5.2}
+\contentsline {subsection}{\numberline {2.5.3}Modelos de comuicaci\IeC {\'o}n}{18}{subsection.2.5.3}
+\contentsline {section}{\numberline {2.6}Open vSwitch}{18}{section.2.6}
+\contentsline {section}{\numberline {2.7}Mininet}{18}{section.2.7}
+\contentsline {section}{\numberline {2.8}Controlador RYU}{19}{section.2.8}
+\contentsline {chapter}{\numberline {3}Plan de ejecuci\IeC {\'o}n y lecciones aprendidas.}{21}{chapter.3}
+\contentsline {section}{\numberline {3.1}Plan de ejecuci\IeC {\'o}n.}{21}{section.3.1}
+\contentsline {section}{\numberline {3.2}Lecciones aprendidas.}{21}{section.3.2}
+\contentsline {chapter}{\numberline {4}Arquitectura del sistema.}{22}{chapter.4}
+\contentsline {section}{\numberline {4.1}Topolog\IeC {\'\i }as.}{22}{section.4.1}
+\contentsline {subsection}{\numberline {4.1.1}Topolog\IeC {\'\i }as lineales.}{22}{subsection.4.1.1}
+\contentsline {subsection}{\numberline {4.1.2}Topolog\IeC {\'\i }as "\IeC {\'a}rbol".}{22}{subsection.4.1.2}
+\contentsline {subsection}{\numberline {4.1.3}Topolog\IeC {\'\i }as con loops.}{22}{subsection.4.1.3}
+\contentsline {subsection}{\numberline {4.1.4}Topolog\IeC {\'\i }as full mesh.}{22}{subsection.4.1.4}
+\contentsline {section}{\numberline {4.2}Controllador SDN.}{22}{section.4.2}
+\contentsline {subsection}{\numberline {4.2.1}Funcionalidades del controllador.}{22}{subsection.4.2.1}
+\contentsline {subsection}{\numberline {4.2.2}Librer\IeC {\'\i }as RYU.}{22}{subsection.4.2.2}
+\contentsline {subsubsection}{\numberline {4.2.2.1}Librer\IeC {\'\i }a igmp.py.}{22}{subsubsection.4.2.2.1}
+\contentsline {subsubsection}{\numberline {4.2.2.2}Desarrollo paralelo a igmplib.py.}{22}{subsubsection.4.2.2.2}
+\contentsline {section}{\numberline {4.3}Men\IeC {\'u} inicial.}{22}{section.4.3}
+\contentsline {chapter}{\numberline {5}Desarrollo del sistema.}{23}{chapter.5}
+\contentsline {section}{\numberline {5.1}Controllador.}{23}{section.5.1}
+\contentsline {section}{\numberline {5.2}Menu inicial.}{23}{section.5.2}
+\contentsline {section}{\numberline {5.3}Scripts auxiliares.}{23}{section.5.3}
+\contentsline {subsubsection}{\numberline {5.3.0.1}App crea json}{23}{subsubsection.5.3.0.1}
+\contentsline {subsubsection}{\numberline {5.3.0.2}Algoritmo Dijkstra}{23}{subsubsection.5.3.0.2}
+\contentsline {subsubsection}{\numberline {5.3.0.3}Leer topo json}{23}{subsubsection.5.3.0.3}
+\contentsline {subsubsection}{\numberline {5.3.0.4}Streaming y recepci\IeC {\'o}n de contenido.}{23}{subsubsection.5.3.0.4}
+\contentsline {chapter}{\numberline {6}Pruebas y resultados.}{24}{chapter.6}
+\contentsline {subsection}{\numberline {6.0.1}Una Subsecci\IeC {\'o}n}{24}{subsection.6.0.1}
+\contentsline {chapter}{\numberline {7}Conclusiones}{25}{chapter.7}
+\contentsline {chapter}{\numberline {8}Bibliograf\'{\i }a}{26}{chapter.8}
+\contentsline {chapter}{\numberline {A}Nombre del Ap\IeC {\'e}ndice 1}{27}{appendix.Alph1}
+\contentsline {section}{\numberline {A.1}Una Secci\IeC {\'o}n}{27}{section.Alph1.1}
+\contentsline {subsection}{\numberline {A.1.1}Una Subsecci\IeC {\'o}n}{27}{subsection.Alph1.1.1}
+\contentsline {chapter}{\numberline {B}Nombre del Ap\IeC {\'e}ndice 2}{28}{appendix.Alph2}
