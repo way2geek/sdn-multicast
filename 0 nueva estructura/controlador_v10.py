@@ -173,19 +173,19 @@ class Controlador(app_manager.RyuApp):
 
                 for i, link in enumerate(self.topo_shape.topo_raw_links):
                     if link.src.dpid == dp.id and link.src.port_no == port_attr.port_no:
-                        print "\t Removing link " + str(link) + " with index " + str(i)
+                        print ("\t Removing link " + str(link) + " with index " + str(i))
                     elif link.dst.dpid == dp.id and link.dst.port_no == port_attr.port_no:
-                        print "\t Removing link " + str(link) + " with index " + str(i)
+                        print ("\t Removing link " + str(link) + " with index " + str(i))
                     else:
                         lista_aux.append(link)
 
                 self.topo_shape.topo_raw_links = copy.copy(lista_aux)
 
                 self.topo_shape.print_links(" Link Down")
-                print "\t First removed link: " + str(first_removed_link)
-                print "\t Second removed link: " + str(second_removed_link)
+                print ("\t First removed link: " + str(first_removed_link))
+                print ("\t Second removed link: " + str(second_removed_link))
 
-                #Se modifican los datos de la topologia que tiene el controlador y se recalculan caminos
+                #Se modifican lols datos de la topologia que tiene el controlador y se recalculan caminos
                 self.eliminar_conexion_entre_switches(first_removed_link.src.dpid, second_removed_link.src.dpid)
                 print(self.conexion_switches)
                 self.recalcular_caminos_down()
@@ -193,8 +193,7 @@ class Controlador(app_manager.RyuApp):
         elif port_attr.state == 0:
             self.topo_shape.print_links(" Link Up")
             if first_removed_link is None and second_removed_link is None:
-                self.agregar_conexion_entre_switches(first_removed_link.src.dpid, second_removed_link.src.dpid, first_removed_link.src.port_no
-                                                    second_removed_link.src.port_no)
+                self.agregar_conexion_entre_switches(first_removed_link.src.dpid, second_removed_link.src.dpid, first_removed_link.src.port_no, second_removed_link.src.port_no)
                 self.recalcular_caminos_up()
 
 
