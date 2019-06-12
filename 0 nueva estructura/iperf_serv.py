@@ -5,7 +5,7 @@ def iperf_serv(ip_group):
     os.system(comando)
 
 if __name__ == '__main__':
-	if(len(sys.argv)==3):
+	if(len(sys.argv)==2):
             IP_MCAST = sys.argv[1]
             iperf_serv(IP_MCAST)
 	else:
