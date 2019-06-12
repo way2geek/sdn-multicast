@@ -174,42 +174,57 @@ class Controlador(app_manager.RyuApp):
 
             if port_down and self.topo_shape.switch_ports_state[dpid]['puertos'][port.port_no] == 'UP':
                 estado_puertos = []
-                self.topo_shape.switch_ports_state[dpid]['puertos'][port.port_no] = 'DOWN'
+                lista_links = []
                 print('PUERTO {} DEL SWITCH {} DOWN'.format(port.port_no, dpid))
                 #print(self.topo_shape.switch_ports_state)
                 'CADA VEZ QUE SE CAE UN PUERTO HAY QUE VERIFICAR EN LOS LINKS DE LA TOPOLOGIA, SI LOS PUERTOS QUE UNEN'
                 'DOS SWITCHES ESTAN DOWN, SE DA DE BAJA EL PUERTO QUE CONECTA AMBOS SWITCHES Y SE INFORMA QUE EL LINK'
                 'ESTA CAIDO. LUEGO SE RECALCULAN CAMINOS'
                 link = self.topo_shape.obtener_link(dpid, port.port_no)
-                if link not in self.topo_shape.links_down:
-                    self.topo_shape.links_down.append(link)
-                    #print(self.topo_shape.links_down)
-                estado_puertos = self.topo_shape.ambos_puertos_link_down(link)
-                if estado_puertos[0] == True and estado_puertos[1] == True:
-                    print('LINK DOWN QUE UNE EL SWITCH {} CON EL SWITCH {} EN LOS PUERTOS {} {}'.format(link.src.dpid, link.dst.dpid,
-                                                                                                        link.src.port_no, link.dst.port_no))
-                    self.eliminar_conexion_entre_switches(link.src.dpid, link.dst.dpid)
-                    self.recalcular_caminos(link.src.dpid, link.dst.dpid, link.src.port_no, link.dst.port_no)
+                if type(link) != type(None):
+                    if link not in self.topo_shape.links_down:
+                        self.topo_shape.links_down.append(link)
+                        lista_links = self.topo_shape.recargar_links(link, port)
+                        self.topo_shape.topo_raw_links = copy.copy(lista_links)
+                        #print(self.topo_shape.topo_raw_links)
+                        self.topo_shape.switch_ports_state[dpid]['puertos'][port.port_no] = 'DOWN'
 
+                    estado_puertos = self.topo_shape.ambos_puertos_link_down(link)
+                    if estado_puertos[0] == True and estado_puertos[1] == True:
+                        print('LINK DOWN QUE UNE EL SWITCH {} CON EL SWITCH {} EN LOS PUERTOS {} {}'.format(link.src.dpid, link.dst.dpid,
+                                                                                                            link.src.port_no, link.dst.port_no))
+                        self.eliminar_conexion_entre_switches(link.src.dpid, link.dst.dpid)
+                        self.recalcular_caminos(link.src.dpid, link.dst.dpid, link.src.port_no, link.dst.port_no)
+                else:
+                    print('LINK ES NONETYPE')
 
             if port_up and self.topo_shape.switch_ports_state[dpid]['puertos'][port.port_no] == 'DOWN':
                 estado_puertos = []
+                lista_links_aux = []
+                lista_links = self.topo_shape.topo_raw_links
+
                 'HAY QUE VER SI SE LEVANTAN AMBOS PUERTOS QUE CORRESPONDEN A UN LINK DE LA TOPOLOGIA Y SETEAR'
                 'LOS PUERTOS CORRESPONDIENTES EN LA CONEXION ENTRE SWITCHES. LUEGO SE RECALCULAN CAMINOS'
-                self.topo_shape.switch_ports_state[dpid]['puertos'][port.port_no] = 'UP'
                 #print(self.topo_shape.switch_ports_state)
                 print('PUERTO {} DEL SWITCH {} UP'.format(port.port_no, dpid))
-                link = self.topo_shape.obtener_link_de_lista_down(dpid, port.port_no)
-                #print('LINK UP {}'.format(link))
-                self.topo_shape.links_down.remove(link)
-                #print(self.topo_shape.links_down)
-                estado_puertos = self.topo_shape.ambos_puertos_link_down(link)
-                if estado_puertos[0] == False and estado_puertos[1] == False:
-                    print('LINK UP QUE UNE EL SWITCH {} CON EL SWITCH {} EN LOS PUERTOS {} {}'.format(link.src.dpid, link.dst.dpid,
-                                                                                                        link.src.port_no, link.dst.port_no))
-                    self.agregar_conexion_entre_switches(link.src.dpid, link.dst.dpid, link.src.port_no, link.dst.port_no)
-                    self.recalcular_caminos(link.src.dpid, link.dst.dpid, link.src.port_no, link.dst.port_no)
 
+                link = self.topo_shape.obtener_link_de_lista_down(dpid, port.port_no)
+                if type(link) != type(None):
+                    if link in self.topo_shape.links_down:
+                        lista_links_aux = self.topo_shape.agregar_link_up(link, port)
+                        lista_links.extend(lista_links_aux)
+                        self.topo_shape.topo_raw_links = copy.copy(lista_links)
+                        self.topo_shape.links_down.remove(link)
+                        self.topo_shape.switch_ports_state[dpid]['puertos'][port.port_no] = 'UP'
+
+                    estado_puertos = self.topo_shape.ambos_puertos_link_down(link)
+                    if estado_puertos[0] == False and estado_puertos[1] == False:
+                        print('LINK UP QUE UNE EL SWITCH {} CON EL SWITCH {} EN LOS PUERTOS {} {}'.format(link.src.dpid, link.dst.dpid,
+                                                                                                            link.src.port_no, link.dst.port_no))
+                        self.agregar_conexion_entre_switches(link.src.dpid, link.dst.dpid, link.src.port_no, link.dst.port_no)
+                        self.recalcular_caminos(link.src.dpid, link.dst.dpid, link.src.port_no, link.dst.port_no)
+                else:
+                    print('LINK ES NONETYPE')
 
 
     '###########FUNCIONES###########'
@@ -225,9 +240,8 @@ class Controlador(app_manager.RyuApp):
     def eliminar_conexion_entre_switches(self, dpid_1, dpid_2):
         switch_1 = self.obtener_nombre_switch(dpid_1)
         switch_2 = self.obtener_nombre_switch(dpid_2)
-        print('switch 1 : {}'.format(switch_1))
-        print('switch 2 : {}'.format(switch_2))
-
+        #print('switch 1 : {}'.format(switch_1))
+        #print('switch 2 : {}'.format(switch_2))
         self.conexion_switches[switch_1][switch_2] = None
         self.conexion_switches[switch_2][switch_1] = None
         #print(self.conexion_switches)
@@ -424,6 +438,7 @@ class Controlador(app_manager.RyuApp):
 
                     puertos_salida = self.switches_por_gid[group_id][switch_camino]
                     'VER COMO HACER PARA QUE NO MODIFIQUE SIEMPRE LA GROUP TABLE'
+                    #print('puertos del grupo {} en el switch {} {}'.format(group_id, switch_camino, self.switches_por_gid[group_id]))
                     buckets =  self.generoBuckets(datapath, puertos_salida)
                     self.add_group_flow(datapath, group_id, datapath.ofproto.OFPGC_MODIFY, datapath.ofproto.OFPGT_ALL, buckets)
 
@@ -652,7 +667,7 @@ class Controlador(app_manager.RyuApp):
         global PRIORITY_MAX
         msgs = []
         #DROPS
-        #msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_LLDP)))
+        msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_type=ether_types.ETH_TYPE_LLDP)))
         # Drop STP BPDU
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_dst='01:80:c2:00:00:00')))
         msgs.append(self.dropPackage(datapath, PRIORITY_MAX, self.match(datapath, eth_dst='01:00:0c:cc:cc:cd')))
@@ -808,8 +823,31 @@ class TopoStructure():
         return list_aux
 
 
-    def ambos_puertos_link_up(self, link):
-        pass
+    def recargar_links(self, link, port):
+        tmp_list = []
+
+        for link_aux in self.topo_raw_links:
+            if link_aux.src.dpid == link.src.dpid and link_aux.src.port_no == port.port_no:
+                pass
+            elif link_aux.dst.dpid == link.dst.dpid and link_aux.dst.port_no == port.port_no:
+                pass
+            else:
+                tmp_list.append(link_aux)
+
+        return tmp_list
+
+
+    def agregar_link_up(self, link, port):
+        tmp_list = []
+        for link_aux in self.links_down:
+            if link_aux.src.dpid == link.src.dpid and link_aux.src.port_no == port.port_no:
+                tmp_list.append(link_aux)
+            elif link_aux.dst.dpid == link.dst.dpid and link_aux.dst.port_no == port.port_no:
+                tmp_list.append(link_aux)
+            else:
+                pass
+
+        return tmp_list
 
 
     def obtener_link(self, dpid, port):
@@ -830,29 +868,3 @@ class TopoStructure():
                 retorno = link
 
         return retorno
-
-
-    def link_with_src_and_port(self, in_port, in_dpid):
-        """
-        Returns a link object that has in_dpid and in_port as source dpid and port.
-        :param in_port: port number of the switch with dpid equal to in_dpid
-        :param in_dpid: Datapath id of the source switch
-        :rtype : Link
-        """
-        for l in self.topo_raw_links:
-            if (l.src.dpid == in_dpid and l.src.port_no == in_port):
-                return l
-        return None
-
-
-    def link_with_dst_and_port(self, in_port, in_dpid):
-        """
-        Returns a link object that has in_dpid and in_port as destination dpid and port.
-        :param in_port: port number of the switch with dpid equal to in_dpid
-        :param in_dpid: Datapath id of the destination switch
-        :rtype : Link
-        """
-        for l in self.topo_raw_links:
-            if (l.dst.dpid == in_dpid and l.dst.port_no == in_port):
-                return l
-        return None

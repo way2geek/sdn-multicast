@@ -171,7 +171,7 @@ opcion = -1
 while (opcion != 0):
     imprimirMenu()
     #kill Mininet
-    # cerrar_mininet()
+    cerrar_mininet()
     print("Seleccione una opcion.")
     opcion = leerIngreso()
     # print("DEBUG: OPCION INGRESADA: {}".format(opcion))
