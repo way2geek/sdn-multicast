@@ -269,7 +269,7 @@ class Controlador(app_manager.RyuApp):
         with open(filename, 'w') as fd:
     	    fd.write(json.dumps(diccionario_nuevo))
 
-        os.system('python app_crea_json_v2.py topo_nueva.json')
+        os.system('python app_crea_json.py topo_nueva.json')
         self.leer_json('salida_topo.json')
 
 
