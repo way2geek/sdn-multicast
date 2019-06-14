@@ -15,7 +15,7 @@ from ryu.lib.packet import lldp
 import json
 import time
 import datetime
-import app_crea_json_v2
+import app_crea_json
 
 from ryu.topology import event
 from ryu.topology.api import get_all_switch, get_all_link, get_switch, get_link
