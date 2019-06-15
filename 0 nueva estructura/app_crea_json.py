@@ -8,7 +8,6 @@ shortest_path = {}			#shortest paths
 caminos_completos1 = {}
 camino_entre_hosts1 = {}
 
-# PATH_TOPOLOGIA = "./topologias/topo_linear_pequena.json"
 
 def load_json_topology (path_de_topo):
 	global switches
@@ -25,13 +24,13 @@ def load_json_topology (path_de_topo):
 
 def shortest_paths(origen):
 	distancia = {}
-	switch_anterior = {}
+	camino = {}
 
 	switches_to_go = switches.keys()
 
 	for node in switches_to_go:
 		distancia[node] = float('inf')
-		switch_anterior[node] = None
+		camino[node] = None
 
 	distancia[origen] = 0
 
@@ -42,25 +41,19 @@ def shortest_paths(origen):
 
 		for switch_aux in switches[switch_mas_cercano]:
 			if switch_aux in switches_to_go:
-				if switches[switch_mas_cercano][switch_aux] == None:
-					aux = float('inf')
-				else:
-					aux = distancia[switch_mas_cercano] + 1
+				aux = distancia[switch_mas_cercano] + 1
 				if aux < distancia[switch_aux]:
 					distancia[switch_aux] = aux
-					switch_anterior[switch_aux] = switch_mas_cercano
-				if aux == float('inf'):
-					switch_anterior[switch_aux] = 'link_down'
-	#print(switch_anterior)
-	return switch_anterior
+					camino[switch_aux] = switch_mas_cercano
+
+	return camino
 
 
 def shortest_paths_all():
 	global shortest_path
-
 	for switch in switches:
 		shortest_path[switch] = shortest_paths(switch)
-	#print(shortest_path)
+	print(shortest_path)
 
 # Funcion que determina si un par de swiches
 # estan conectados entre ellos o no
@@ -70,9 +63,9 @@ def swiches_conectados_directamente(dpid_origen, dpid_destino):
 	estan_directamente_conectados = False
 	for switch_aux in switches:
 		if(switch_aux == dpid_origen):
-			if dpid_destino != 'link_down':
-				if (dpid_origen == shortest_path[switch_aux][dpid_destino]):
-					estan_directamente_conectados = True
+			# if dpid_destino != 'link_down':
+			if (dpid_origen == shortest_path[switch_aux][dpid_destino]):
+				estan_directamente_conectados = True
 
 	return estan_directamente_conectados
 
@@ -97,19 +90,19 @@ def switches_son_iguales(sw1, sw2):
 def determinar_puerto_salida(dpid_origen, dpid_destino):
 	puerto_salida = -1
 	# Caso switches contiguos
-	if dpid_destino != 'link_down':
-		if(swiches_conectados_directamente(dpid_origen, dpid_destino)):
-			puerto_salida = switches[dpid_origen][dpid_destino]
-		# Caso mismo switch
-		elif(shortest_path[dpid_origen][dpid_destino] == None):
-			pass
-		# Caso switches separados
-		else:
-			while (puerto_salida == -1):
-				nuevo_destino = shortest_path[dpid_origen][dpid_destino]
+	# if dpid_destino != 'link_down':
+	if(swiches_conectados_directamente(dpid_origen, dpid_destino)):
+		puerto_salida = switches[dpid_origen][dpid_destino]
+	# Caso mismo switch
+	elif(shortest_path[dpid_origen][dpid_destino] == None):
+		pass
+	# Caso switches separados
+	else:
+		while (puerto_salida == -1):
+			nuevo_destino = shortest_path[dpid_origen][dpid_destino]
 
-				puerto_salida = determinar_puerto_salida(dpid_origen, nuevo_destino)
-		return puerto_salida
+			puerto_salida = determinar_puerto_salida(dpid_origen, nuevo_destino)
+	return puerto_salida
 
 
 # Funcion que carga un diccionario que resulta
@@ -172,23 +165,22 @@ def caminos_completos():
 				if(swiches_conectados_directamente(sw1, sw2)):
 					# el puerto de salida viene directamente de dijkstra
 					puerto_aux=camino_entre_switches()[sw1][sw2]
-					if puerto_aux != 'link_down':
-						caminos_completos[sw1][sw2].update({sw1:[puerto_aux]})
+					caminos_completos[sw1][sw2].update({sw1:[puerto_aux]})
 
 				else:
 					#determino el camino switch por switch iterando
 					# tomo nodo anterior mas cerano al destino
 					nuevo_sw2=shortest_path[sw1][sw2]
-					if nuevo_sw2 != 'link_down':
+					if nuevo_sw2 != None:
+						# if nuevo_sw2 != 'link_down':
 						while(switches_son_iguales(sw1,nuevo_sw2)==False):
+
 							puerto_aux=camino_entre_switches()[nuevo_sw2][sw2]
-							if puerto_aux != 'link_down':
-								caminos_completos[sw1][sw2].update({nuevo_sw2:[puerto_aux]})
+							caminos_completos[sw1][sw2].update({nuevo_sw2:[puerto_aux]})
 							nuevo_sw2=shortest_path[sw1][nuevo_sw2]
 
 						puerto_aux=camino_entre_switches()[nuevo_sw2][sw2]
-						if puerto_aux != 'link_down':
-							caminos_completos[sw1][sw2].update({nuevo_sw2:[puerto_aux]})
+						caminos_completos[sw1][sw2].update({nuevo_sw2:[puerto_aux]})
 
 				# Se agrega paso final para agregar destino como valor
 				# de la key de destino
