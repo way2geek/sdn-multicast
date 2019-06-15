@@ -1,7 +1,0 @@
-
-Cumple:
-
-straming unicast,
-streaming multicast 1 a 1
-streaming multicast 1 a varios
-streaming multicast varios a 1
