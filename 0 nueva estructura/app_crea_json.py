@@ -205,7 +205,7 @@ def generar_json(path_de_topo):
 	camino_entre_hosts1 = camino_entre_hosts()
 	caminos_completos1 = caminos_completos()
 	#print(shortest_path)
-	print(caminos_completos1)
+	#print(caminos_completos1)
 	with open(filename, 'w') as fd:
 	    fd.write(json.dumps([switches, hosts, dpids, camino_entre_hosts1, caminos_completos1]))    # both dicts in a list here
 
