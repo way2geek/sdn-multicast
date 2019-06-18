@@ -48,8 +48,8 @@ class Controlador(app_manager.RyuApp):
         'Datos de control para el controlador'
         self.groupID = 0
         self.lista_grupos = {}
-        self.switches_por_gid = {}
-        self.datapath_switch = {}
+        self.switches_por_gi = {}
+        self.datapath_switch= {}
 
         'Datos de la topologia en la cual el controlador funciona'
         self.conexion_switches = {}
@@ -246,8 +246,8 @@ class Controlador(app_manager.RyuApp):
         self.conexion_switches[switch_1].pop(switch_2)
         self.conexion_switches[switch_2].pop(switch_1)
         #print(self.conexion_switches)
-        #self.borrar_puertos_switch_groupID(dpid_1, port_1, dpid_2, port_2)
-        #self.borrar_flujos_grupo_switch(switch_1, port_1, switch_2, port_2)
+        # self.borrar_puertos_switch_groupID(dpid_1, port_1, dpid_2, port_2)
+        # self.borrar_flujos_grupo_switch(switch_1, port_1, switch_2, port_2)
         #print(self.switches_por_gid)
         self.recalcular_caminos()
 
@@ -381,29 +381,29 @@ class Controlador(app_manager.RyuApp):
                 self.camino_grupos[group_id]['camino'].setdefault(switch_destino, {})
                 print('Se agrego el switch {} al grupo {}'.format(switch_destino, group_id))
                 self.camino_grupos[group_id]['switches_destino'][switch_destino].append(in_port)
-                self.loggear_arbol_multicast(self.camino_grupos)
+                self.log_arbol_multicast(self.camino_grupos)
 
             else:
                 if in_port not in self.camino_grupos[group_id]['switches_destino'][switch_destino]:
                     self.camino_grupos[group_id]['switches_destino'][switch_destino].append(in_port)
                     self.switches_por_gid[group_id][switch_destino].append(in_port)
-                    self.loggear_arbol_multicast(self.camino_grupos)
+                    self.log_arbol_multicast(self.camino_grupos)
 
         elif modo == 'leave':
             if len(self.camino_grupos[group_id]['switches_destino'][switch_destino]) > 0:
                 self.camino_grupos[group_id]['switches_destino'][switch_destino].remove(in_port)
                 print('EL host conectado al puerto {} se fue del grupo {}'.format(in_port, group_id))
-                self.loggear_arbol_multicast(self.camino_grupos)
+                self.log_arbol_multicast(self.camino_grupos)
 
             if len(self.camino_grupos[group_id]['switches_destino'][switch_destino]) == 0:
                 self.camino_grupos[group_id]['switches_destino'].pop(switch_destino)
                 print('Se elimino el switch destino {} del grupo {}'.format(switch_destino, group_id))
-                self.loggear_arbol_multicast(self.camino_grupos)
+                self.log_arbol_multicast(self.camino_grupos)
 
                 if len(self.camino_grupos[group_id]['switches_destino'].keys()) == 0:
                     self.elimino_grupo_multicast(address, switch_destino, group_id)
                     print('Se elimino el grupo {}'.format(group_id))
-                    self.loggear_arbol_multicast(self.camino_grupos)
+                    self.log_arbol_multicast(self.camino_grupos)
 
 
     def elimino_grupo_multicast(self, address, switch_destino, group_id):
@@ -479,7 +479,7 @@ class Controlador(app_manager.RyuApp):
             self.camino_grupos[group_id]['camino'][switch_destino][switch_destino] = self.camino_grupos[group_id]['switches_destino'][switch_destino]
 
             self.obtener_dic_arboles(self.camino_grupos)
-            self.loggear_arbol_multicast(self.camino_grupos)
+            self.log_arbol_multicast(self.camino_grupos)
 
             for switch_camino in self.camino_grupos[group_id]['camino'][switch_destino]:
                 datapath = self.datapath_switch[switch_camino]['datapath']
@@ -761,7 +761,6 @@ class Controlador(app_manager.RyuApp):
             retorno = False
         return retorno
 
-
     def obtener_datapath_switches(self, datapath):
         switch = self.obtener_nombre_switch(datapath.id)
         self.datapath_switch.setdefault(switch, {})
@@ -772,46 +771,56 @@ class Controlador(app_manager.RyuApp):
     # en archivo de texto con el historico.
     # Permite ver los cambios dentro de los grupos a cada
     # momento
-    def loggear_arbol_multicast(self, diccionario_camino_grupos):
-        # Se crea archivo
-        file_arboles = open("arboles_multicast.txt","a+")
+    def log_arbol_multicast(self, diccionario_camino_grupos):
+        # Se crean archivos
+        file_arboles_log = open("arboles_multicast.txt","a+")
+        file_arboles_reciente = open("arboles_multicast.txt","w")
         # Se loguea tiempo
         ts=time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        file_arboles.write("\nLog Time = "+st)
+        file_arboles_log.write("\nLog Time = "+st)
+        file_arboles_reciente.write("\nLog Time = "+st)
         for grupo in diccionario_camino_grupos:
             ip_grupo = self.obtener_ip_grupo(grupo)
             # Se loguea IP del grupo Multicast
-            file_arboles.write("\n\tIP GRUPO : "+str(ip_grupo))
+            file_arboles_log.write("\n\tIP GRUPO : "+str(ip_grupo))
+            file_arboles_reciente.write("\n\tIP GRUPO : "+str(ip_grupo))
             if len(diccionario_camino_grupos[grupo]['origen'].keys()) > 0:
                 s_ori = diccionario_camino_grupos[grupo]['origen'].keys()
                 # Se loguea switch origen del arbol Multicast
-                file_arboles.write("\n\t\tSwitch Origen : "+(str(s_ori)[3:5]))
+                file_arboles_log.write("\n\t\tSwitch Origen : "+(str(s_ori)[3:5]))
+                file_arboles_reciente.write("\n\t\tSwitch Origen : "+(str(s_ori)[3:5]))
             else:
-                file_arboles.write("\n\t\tSwitch Origen : No definido")
+                file_arboles_log.write("\n\t\tSwitch Origen : No definido")
+                file_arboles_reciente.write("\n\t\tSwitch Origen : No definido")
 
             if len(diccionario_camino_grupos[grupo]['switches_destino'].keys()) > 0:
                 for s_dst in diccionario_camino_grupos[grupo]['switches_destino']:
                     # Se loguea un switch destino de ese gruposwitch_origen
-                    file_arboles.write("\n\t\t\tSwitch Destino : "+str(s_dst))
-                    file_arboles.write("\n\t\t\t\tCamino:")
+                    file_arboles_log.write("\n\t\t\tSwitch Destino : "+str(s_dst))
+                    file_arboles_reciente.write("\n\t\t\tSwitch Destino : "+str(s_dst))
+                    file_arboles_log.write("\n\t\t\t\tCamino de {} a {}:".format(s_ori ,s_dst))
+                    file_arboles_reciente.write("\n\t\t\t\tCamino de {} a {}:".format(s_ori ,s_dst))
 
                     #Se loguea el camino para ese par Origen-destino
                     if  len(diccionario_camino_grupos[grupo]['camino'][s_dst].keys()) > 0:
                         for s_cami in diccionario_camino_grupos[grupo]['camino'][s_dst]:
                             puertos = diccionario_camino_grupos[grupo]['camino'][s_dst][s_cami]
-                            text_sw_camino = "\n\t\t\t\t\tSwitch "+str(s_cami)+ " envia trafico por puerto/s"
+                            text_sw_camino = "\n\t\t\t\t\tSwitch "+str(s_cami)+ " envia trafico por los siguientes puertos:"
                             puertos = str(puertos)
                             puertos = puertos.replace("["," ")
                             puertos = puertos.replace("]"," ")
                             text_sw_camino = text_sw_camino + puertos
-                            file_arboles.write(text_sw_camino)
+                            file_arboles_log.write(text_sw_camino)
+                            file_arboles_reciente.write(text_sw_camino)
             else:
-                file_arboles.write("\n\t\t\tSwitch Destino : No definido")
-                file_arboles.write("\n\t\t\t\tCamino: No definido")
+                file_arboles_log.write("\n\t\t\tSwitch Destino : No definido")
+                file_arboles_reciente.write("\n\t\t\tSwitch Destino : No definido")
+                file_arboles_log.write("\n\t\t\t\tCamino: No definido")
+                file_arboles_reciente.write("\n\t\t\t\tCamino: No definido")
         # Se cierra archivo de salida
-        file_arboles.close()
-
+        file_arboles_log.close()
+        file_arboles_reciente.close()
 
     # Funcion quevuelve la IP del grupo Multicast
     # para cierto group ID
