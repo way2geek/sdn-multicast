@@ -164,40 +164,33 @@ def ejec_controller():
 def cerrar_mininet():
     print("Debug: Cerrando Mininet...")
     os.system("mn -c")
+    time.sleep(2)
     print("Debug: Mininet finalizado.")
 # LLAMADOS
 
 opcion = -1
 while (opcion != 0):
     imprimirMenu()
-    #kill Mininet
+    
     cerrar_mininet()
     print("Seleccione una opcion.")
     opcion = leerIngreso()
-    # print("DEBUG: OPCION INGRESADA: {}".format(opcion))
+    
     if (opcion == 1):
-        # print ('DEBUG Seleccion opcion 1')
         crear_json_y_correr_topo(1)
     elif (opcion == 2):
-        # print ('Debug Seleccion opcion 2')
         crear_json_y_correr_topo(2)
     elif (opcion ==3):
-        # print ('Debug Seleccion opcion 3')
         crear_json_y_correr_topo(3)
     elif (opcion ==4):
-        # print ('Debug Seleccion opcion 4')
         crear_json_y_correr_topo(4)
     elif (opcion ==5):
-        # print ('Debug Seleccion opcion 5')
         crear_json_y_correr_topo(5)
     elif (opcion ==6):
-        # print ('Debug Seleccion opcion 6')
         crear_json_y_correr_topo(6)
     elif (opcion ==7):
-        # print ('Debug Seleccion opcion 7')
         crear_json_y_correr_topo(7)
     elif (opcion ==8):
-        # print ('Debug Seleccion opcion 8')
         crear_json_y_correr_topo(8)
     elif (opcion ==9):
         mostrarAyuda()
