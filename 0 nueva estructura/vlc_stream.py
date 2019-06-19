@@ -1,7 +1,7 @@
 import os
 import sys
 def hacer_streaming(path_media, ip_group):
-    comando = "vlc {} --sout udp:{}".format(path_media, ip_group)
+    comando = "cvlc {} --sout udp:{}".format(path_media, ip_group)
     print("Comenzando streaming...")
     os.system(comando)
 
