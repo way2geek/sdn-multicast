@@ -114,7 +114,7 @@ def ejec_app_crea_json(una_opcion):
     elif(una_opcion == 3):
         os.system("python app_crea_json.py topologias/topo_arbol_3_ramas.json")
     elif(una_opcion == 4):
-        os.system("python app_crea_json.py topologias/topo_arbol_profundo.json")
+        os.system("python app_crea_json.py topologias/topo_arbol_3_niveles.json")
     elif(una_opcion == 5):
         os.system("python app_crea_json.py topologias/topo_anillo_simple.json")
     elif(una_opcion == 6):
@@ -136,7 +136,7 @@ def ejec_leer_topo_json(una_opcion):
     elif(una_opcion == 3):
         os.system("python leer_topo_json.py topologias/topo_arbol_3_ramas.json")
     elif(una_opcion == 4):
-        os.system("python leer_topo_json.py topologias/topo_arbol_profundo.json")
+        os.system("python leer_topo_json.py topologias/topo_arbol_3_niveles.json")
     elif(una_opcion == 5):
         os.system("python leer_topo_json.py topologias/topo_anillo_simple.json")
     elif(una_opcion == 6):
@@ -172,7 +172,6 @@ opcion = -1
 while (opcion != 0):
     imprimirMenu()
     
-    cerrar_mininet()
     print("Seleccione una opcion.")
     opcion = leerIngreso()
     
@@ -198,3 +197,4 @@ while (opcion != 0):
         cerrar_programa()
     else:
         print('Ingreso invalido.')
+    cerrar_mininet()
