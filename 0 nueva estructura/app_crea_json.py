@@ -53,7 +53,7 @@ def shortest_paths_all():
 	global shortest_path
 	for switch in switches:
 		shortest_path[switch] = shortest_paths(switch)
-	print(shortest_path)
+	# print(shortest_path)
 
 # Funcion que determina si un par de swiches
 # estan conectados entre ellos o no
