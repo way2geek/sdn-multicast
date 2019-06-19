@@ -79,7 +79,7 @@ def imprimirMenu():
     print("\t8- Topologia full mesh compleja.")
     print("\t9- Ver ayuda.")
     print("\t0- Salir.")
-    pass
+
 
 def cerrar_programa():
     print("Cerrando programa")
@@ -162,12 +162,12 @@ def crear_json_y_correr_topo(una_op):
 def ejec_controller():
     pass
 def cerrar_mininet():
-    print("Debug: Cerrando Mininet...")
-    os.system("mn -c")
-    time.sleep(2)
-    print("Debug: Mininet finalizado.")
-# LLAMADOS
+    print("Cerrando Mininet...")
+    os.system("sudo mn -c")
+    time.sleep(1)
+    print("Mininet finalizado.")
 
+# LLAMADOS
 opcion = -1
 while (opcion != 0):
     imprimirMenu()
