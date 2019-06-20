@@ -2,6 +2,11 @@ import os
 import sys
 def hacer_streaming(path_media, ip_group):
     comando = "cvlc {} --sout udp:{} --loop".format(path_media, ip_group)
+    # opcion repeat
+    # comando = "cvlc {} --sout udp:{} --repeat".format(path_media, ip_group)
+    # opcion quiet
+    # comando = "cvlc {} --sout udp:{} --quiet".format(path_media, ip_group)
+    
     print("Comenzando streaming...")
     os.system(comando)
 
