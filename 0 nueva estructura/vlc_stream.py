@@ -6,6 +6,10 @@ def hacer_streaming(path_media, ip_group):
     # comando = "cvlc {} --sout udp:{} --repeat".format(path_media, ip_group)
     # opcion quiet
     # comando = "cvlc {} --sout udp:{} --quiet".format(path_media, ip_group)
+    # opcion debug
+    # comando = "cvlc {} --sout udp:{} -v".format(path_media, ip_group)
+    # opcion debug incl. mensajes de severidad menor
+    # comando = "cvlc {} --sout udp:{} -vv".format(path_media, ip_group)
     
     print("Comenzando streaming...")
     os.system(comando)

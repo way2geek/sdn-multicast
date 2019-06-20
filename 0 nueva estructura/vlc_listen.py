@@ -5,6 +5,10 @@ def suscribir(una_ip):
     comando = "vlc udp://@{}".format(una_ip)
     # opcion quiet
     # comando = "vlc udp://@{} --quiet".format(una_ip)
+    # opcion debug
+    # comando = "vlc udp://@{} -v".format(una_ip)
+    # opcion debug incl. mensajes de severidad menor
+    # comando = "vlc udp://@{} -v".format(una_ip)
     print (comando)
     os.system(comando)
     pass
