@@ -1,3 +1,15 @@
-Repositorio para todos los codigo fuente que probemos y vayamos armando.
+Sistema de Distribución Multicast en SDN.
+- SDN
+- RYU Controller
+- Openflow
+- Open vSwitch
+- Mininet
 
-Tesis sdn-multicast.
+- Multicast
+- Streaming 
+- VLC Media Player
+
+- Ubuntu
+- Python
+- Dijkstra
+
