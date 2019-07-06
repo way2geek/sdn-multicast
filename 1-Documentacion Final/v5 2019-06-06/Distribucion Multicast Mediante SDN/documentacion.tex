@@ -387,7 +387,7 @@ A modo de ejemplo introducimos el siguiente texto autogenerado:
 Ejemplo de lista utilizando itemize:
 \begin{itemize}
     \item Primero
-    \item Segundo
+    \item Segundo sdaskdjkdj adal jsaldklajsdk askljdalsd ajlkd asdkjasldkja sd. klsjdalskdj lasdjalskdja sdjidql asdalsidalskjd asd. sdkasdjlaks d. ldjalskdja . alksdjalskdja lskdjal .
     \item Tercero\\
 \end{itemize}
 
@@ -1020,16 +1020,18 @@ En esta sección se detallarán las pruebas realizadas sobre el sistema para det
 \vspace{0.5 cm}
 
 \subsubsection{Caso de prueba 1: formación de un grupo Multicast.} 
-Se utilizará \textit{iperf} para mostrar el procedimiento mediante el cual los \textit{hosts} se suscriben a un grupo Multicast. La IP del grupo será la 224.0.0.15 y se utilizará el host h1 para suscribirse al mismo.
+\label{primercaso}
+
+Objetivo de la prueba: mostrar el soporte de protocolo IGMPv2, el reconocimiento de direcciones Multicast y la reacción del controlador ante este tipo de tráfico de red.
 
 \vspace{0.5cm}
-Resultado esperado: se espera que el host envíe un \textit{Membership Report} hacia la IP del grupo y que el controlador cree el grupo con un identificador ya que reconoce que se trata un destino Multicast nuevo.
-
+Procedimiento: se utilizará \textit{iperf} para mostrar el procedimiento mediante el cual los \textit{hosts} se suscriben a un grupo Multicast. La IP del grupo será la 224.0.0.15 y se utilizará el host h1 para suscribirse al mismo.
 
 \vspace{0.5cm}
-Resultado obtenido y explicación: 
+Resultado esperado: el host envará un \textit{Membership Report} hacia la IP del grupo y que el controlador creará el grupo con un identificador ya que reconocerá que se trata un destino Multicast nuevo.
 
-Se observa en las figuras \ref{igmp_mr_h1} y \ref{igmp_mr_h1_detail} el paquete de \textit{Membership Report} proveniente del host 1 cuya IP es 10.0.0.11 y es enviada con destino la IP del grupo.
+\vspace{0.5cm}
+Resultado obtenido y explicación: se observa en las figuras \ref{igmp_mr_h1} y \ref{igmp_mr_h1_detail} el paquete de \textit{Membership Report} proveniente del host 1 cuya IP es 10.0.0.11 y es enviada con destino la IP del grupo.
 
 \begin{figure}[ht]
  \centering
@@ -1040,80 +1042,68 @@ Se observa en las figuras \ref{igmp_mr_h1} y \ref{igmp_mr_h1_detail} el paquete 
 
 \begin{figure}[ht]
  \centering
- \includegraphics[width=0.6\textwidth]{fotos/5_Pruebas/1_topo_lineales/Casos/1/wire_igmp_detail.png}
+ \includegraphics[width=0.5\textwidth]{fotos/5_Pruebas/1_topo_lineales/Casos/1/wire_igmp_detail.png}
  \caption{IGMP Membership Report - Detalle.}
  \label{igmp_mr_h1_detail}
 \end{figure}
 
+A su vez, el controlador se programó para que muestre los cambios a nivel de grupos Multicast por la terminal. En la última linea de la figura \ref{contr_add_grupo_mcastl} se puede ver un ejemplo representativo de esta información que detalla el switch que se unió a formar parte del grupo.
 
+\begin{figure}[ht]
+ \centering
+ \includegraphics[width=1\textwidth]{fotos/5_Pruebas/1_topo_lineales/Casos/1/contr_reconocimiento.png}
+ \caption{Terminal del controlador.}
+ \label{contr_add_grupo_mcastl}
+\end{figure}
 
 \vspace{0.5cm}
-Mostrar recortes-capturas de tráfico con Wireshark mostrando paquetes importantes (Membership Report, Leave, etc).
 
-\subsubsection{Caso de prueba 2: Streaming de video de 2 grupos Multicast} 
-Se realiza streaming de video desde el Host X hacia la IP 225.0.0.20 (grupo A) y desde el Host Y hacia la IP 225.0.1.90 (Grupo B). El grupo A es recibido desde los host A, B, C y D. El grupo B es recibido desde los host E, F, G y H.
+Obsérvese que la prueba realizada con \textit{iperf} también podría haber sido hecha mediante VLC. Pese a eso, se considera igualmente válida para mostrar el funcionamiento de IGMP y demostrar que el controlador reconoce el protocolo. Además, las pruebas con VLC se realizarán desde la sección a continuación en adelante, por lo que se entiende que tendrá suficiente cobertura de prueba.
+
+\subsubsection{Caso de prueba 2: Streaming de video en dos grupos Multicast independientes.} 
+
+Objetivo de la prueba: mostrar que el sistema no solo permite realizar streaming mediante multidifusión sino que además es capaz de identificar tráfico de más de un grupo y direccionarlo correctamente. También se busca dejar claro que el controlador reconoce los orígenes y destinos del contenido y según corresponda, escribe las reglas adecuadas a nivel \textit{Openflow}.
+
+\vspace{0.5cm}
+Procedimiento: se realiza streaming de video desde el Host 1 hacia la IP 224.0.0.15 (grupo A) y desde el Host 2 hacia la IP 224.0.1.16 (grupo B). El grupo A será recibido desde los host 3 y 5. El grupo B será recibido desde los host 7, 8 y 9.
+
+\vspace{0.5cm}
+Resultado esperado: se volverá a comprobar el mismo funcionamiento de IGMP mostrado en la sección \ref{primercaso} pero esta vez, con el uso de VLC. Esto permitirá comprobar la recepción del video proveniente desde las dos fuentes diferentes, es decir los Hosts 3 y 5 recibirán un stream de video y los hosts 7, 8 y 9, recibirán otro. Y para finalizar, se mostrá la configuración los switches de la topología durante la ejecución del \textit{streaming}.
+
+\vspace{0.5cm}
+Resultado obtenido y explicación: 
+
+Pendiente.
+
+
+
+\subsubsection{Caso de prueba 3: abandono de grupo Multicast} 
+
+Objetivo de la prueba: mostrar el comportamiento del sistema cuando un host abandona un grupo Multicast y observar como se modifican los flujos previamente escritos.
+
+\vspace{0.5cm}
+Procedimiento: con un grupo Multicast formado de antemano, con la IP 224.0.0.15, teniendo el host 1 haciendo streaming y los hosts 2, 3 y 4 recibiéndolose dará de baja a los hosts 3 y 4.
+
+\vspace{0.5cm}
+Resultado esperado: los host 3 y 4 enviarán cada uno un paquete IGMP de \textit{Leave Group} dirigido a la IP 224.0.0.2 tal como se espera de IGMPv2. El controlador detectará estos paquetes y en consecuencia eliminará los flujos asociados a estos hosts. Es esperable que el host 2, siga recibiendo el contenido emitido en el streaming ya que no envió un paquete \textit{Leave Group}.
+
+\vspace{0.5cm}
+Resultado obtenido y explicación: pendiente. Mostrar flujos del antes y el despues junto con la captura de los leave.
+
+\subsubsection{Caso de prueba 4: eliminación de grupo Multicast.} 
+
+PENDIENTE PROBAR...
+
+Objetivo de la prueba: mostrar qué ocurre cuando un grupo Multicast es eliminado.
+
+\vspace{0.5cm}
+Procedimiento: en un grupo con la IP 224.0.0.15 y compuesto por los hosts H1, H2 y H3 se procederá a cerrar el envío de streaming y luego se cerrará la recepción del mismo.
 
 \vspace{0.5cm}
 Resultado esperado: 
 
 \vspace{0.5cm}
 Resultado obtenido y explicación: 
-
-\vspace{0.5cm}
-Mostrar recortes-capturas de tráfico con Wireshark mostrando paquetes importantes (Membership Report, Leave, etc).
-
-\subsubsection{Caso de prueba 3: Streaming de video de 5 grupos Multicast} 
-
-Se realiza streaming.
-
-\vspace{0.5cm}
-Resultado esperado: 
-
-\vspace{0.5cm}
-Resultado obtenido y explicación: 
-
-\vspace{0.5cm}
-Mostrar recortes-capturas de tráfico con Wireshark mostrando paquetes importantes (Membership Report, Leave, etc).
-
-\subsubsection{Caso de prueba 4: abandono de grupo Multicast} 
-
-Se realiza streaming.
-
-\vspace{0.5cm}
-Resultado esperado: 
-
-\vspace{0.5cm}
-Resultado obtenido y explicación: 
-
-\vspace{0.5cm}
-Mostrar recortes-capturas de tráfico con Wireshark mostrando paquetes importantes (Membership Report, Leave, etc).
-
-\subsubsection{Caso de prueba 5: eliminación de grupo Multicast} 
-Se realiza streaming.
-
-\vspace{0.5cm}
-Resultado esperado: 
-
-\vspace{0.5cm}
-Resultado obtenido y explicación: 
-
-\vspace{0.5cm}
-Mostrar recortes-capturas de tráfico con Wireshark mostrando paquetes importantes (Membership Report, Leave, etc).
-
-\subsubsection{Caso de prueba 5: efecto de la baja de un enlace.} 
-Se realiza streaming.
-
-\vspace{0.5cm}
-Resultado esperado: 
-
-\vspace{0.5cm}
-Resultado obtenido y explicación: 
-
-\vspace{0.5cm}
-Mostrar recortes-capturas de tráfico con Wireshark mostrando paquetes importantes (Membership Report, Leave, etc).
-
-
-
 
 
 \subsection{Topología lineal de 10 switches.}
@@ -1126,30 +1116,40 @@ Mostrar recortes-capturas de tráfico con Wireshark mostrando paquetes important
 \end{figure}
 
 
-\subsubsection{Caso de prueba 1: Streaming de video de 5 grupos Multicast} 
-Se realiza streaming.
+\subsubsection{Caso de prueba 1: Streaming de video en tres grupos Multicast en simultáneo.} 
+\label{prueba3grupostopograndelineal}
+Objetivo de la prueba: reafirmar que el sistema soporta múltiples grupos multicast en los cuales se emite video. Hacer énfasis en los flujos Openflow que el controlador aplique en los switches.
 
 \vspace{0.5cm}
-Resultado esperado: 
+Procedimiento: se emitirá streaming de video desde los hosts H1, H3 y H5 y se recibirá el contenido desde los hosts H12, H14, H16 y H18. Las direcciones IP de cada grupo serán 224.0.0.101, 224.0.0.102, 224.0.0.103 y 224.0.0.104 respectivamente. Observar que para este caso, se hará enfasis en las reglas \textit{Openflow} que aplicará el controlador sobre los switches.
+
+\vspace{0.5cm}
+Resultado esperado: se espera que el controlador aplique las siguientes reglas.
+
+Para el tráfico del grupo 224.0.0.101 compuesto por los hosts 1 y 12, se espera que el tráfico atraviese los switches 1, 2, 3, 4 y 5 pero que ninguno de ellos se lo envíe a los hosts que tengan conectados directamente. Solo el switch 6 debería enviar el contenido al host 12 que tiene conectado en el puerto 2 y no enviarlo a ningún otro destino.
+
+Paralelamente, para el tráfico del grupo 224.0.0.102 compuesto por los hosts 3 y 14, se espera que el tráfico atraviese los switches 2, 3, 4, 5 y 6 pero que ninguno de ellos se lo envíe a los hosts que tengan conectados directamente. Solo el switch 7 debería enviar el contenido al host 14 que tiene conectado en el puerto 2 y no enviarlo a ningún otro destino.
+
+Se espera que el comportamiento sea análogo en el resto de los grupos y se profundizará en los resultados obtenidos.
 
 \vspace{0.5cm}
 Resultado obtenido y explicación: 
-
-\vspace{0.5cm}
-Mostrar recortes-capturas de tráfico con Wireshark mostrando paquetes importantes (Membership Report, Leave, etc).
+Pendiente.
 
 \subsubsection{Caso de prueba 2: abandono de grupo Multicast} 
 
-Se realiza streaming.
+Objetivo de la prueba: mostrar el comportamiento del sistema cuando varios hosts abandonan distintos grupos Multicast.
 
 \vspace{0.5cm}
-Resultado esperado: 
+Procedimiento: con el mismo ejemplo de la sección ref{prueba3grupostopograndelineal}, se darán de baja los hosts 12 y 14 pero se mantendrán los hosts 16 y 18
 
 \vspace{0.5cm}
-Resultado obtenido y explicación: 
+Resultado esperado: los host 3 y 4 enviarán cada uno un paquete IGMP de \textit{Leave Group} dirigido a la IP 224.0.0.2 tal como se espera de IGMPv2. El controlador detectará estos paquetes y en consecuencia eliminará los flujos asociados a estos hosts. Es esperable que el host 2, siga recibiendo el contenido emitido en el streaming ya que no envió un paquete \textit{Leave Group}.
 
 \vspace{0.5cm}
-Mostrar recortes-capturas de tráfico con Wireshark mostrando paquetes importantes (Membership Report, Leave, etc).
+Resultado obtenido y explicación: pendiente
+
+
 
 \subsubsection{Caso de prueba 3: eliminación de grupo Multicast} 
 Se realiza streaming.
