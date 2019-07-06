@@ -1,7 +1,0 @@
-$ sudo ovs-ofctl -O openflow13 dump-flows s1 --sort=nw_src
-
-OFPST_FLOW reply (OF1.3) (xid=0x2):
-
-$ sudo ovs-ofctl -O openflow13 dump-groups s1
-
-OFPST_GROUP_DESC reply (OF1.3) (xid=0x2):

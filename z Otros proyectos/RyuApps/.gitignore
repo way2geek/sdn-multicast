@@ -1,9 +1,0 @@
-Topology.json
-TopoConfig.json
-test.py
-*.pyc
-.idea/
-
-*~
-./
-../
